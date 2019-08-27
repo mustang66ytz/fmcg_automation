@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+
+<library path="lib/librviz_simple_gui">
+  <class name="rviz_simple_gui/SimplePanel" type="rviz_simple_gui::SimplePanel" base_class_type="rviz::Panel">
+    <description>
+      A simple RVIZ panel
+    </description>
+  </class>
+</library>
