@@ -39,6 +39,7 @@ protected Q_SLOTS:
   void pushButton_A_clicked(); 
   void pushButton_B_clicked();
   void pushButton_C_clicked(); 
+  void pushButtonPlanning_clicked();
 
 protected:
   // UI

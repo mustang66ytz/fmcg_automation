@@ -5,14 +5,34 @@ add_definitions(-std=c++11)
 find_package(catkin REQUIRED COMPONENTS 
   roscpp
   rviz 
+  interactive_markers
+  moveit_core
+  moveit_ros_perception
+  moveit_ros_planning_interface
+  pluginlib
+  std_msgs
+  geometry_msgs
+  message_generation
 )
 
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Gui REQUIRED)
 
+## Generate services in the 'srv' folder
+add_service_files(
+  FILES
+  MoveitPlanner.srv
+)
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  geometry_msgs
+)
+
 catkin_package( 
-  CATKIN_DEPENDS roscpp rviz
+  CATKIN_DEPENDS roscpp rviz message_runtime
 )
 
 ###########
@@ -58,11 +78,14 @@ add_library(${PROJECT_NAME}
   ${rviz_simple_gui_SRCS}
 )
 
+add_executable(${PROJECT_NAME}_moveit_node src/moveit_node.cpp)
+
 target_link_libraries(${PROJECT_NAME} 
                       ${catkin_LIBRARIES}
                       Qt5::Widgets
                       Qt5::Gui 
                       )
+target_link_libraries(${PROJECT_NAME}_moveit_node ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 find_package(class_loader)
 class_loader_hide_library_symbols(${PROJECT_NAME})

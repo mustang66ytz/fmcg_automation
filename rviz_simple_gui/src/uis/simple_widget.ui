@@ -52,6 +52,19 @@
     <string>PushButton C</string>
    </property>
   </widget>
+  <widget class="QPushButton" name="pushButtonPlanning">
+   <property name="geometry">
+    <rect>
+     <x>40</x>
+     <y>270</y>
+     <width>191</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>StartPlanning</string>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections/>
