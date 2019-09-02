@@ -79,6 +79,8 @@ add_library(${PROJECT_NAME}
 )
 
 add_executable(${PROJECT_NAME}_moveit_node src/moveit_node.cpp)
+## add motion planning service server
+add_executable(${PROJECT_NAME}_plan_server_node src/motion_plan_server.cpp)
 
 target_link_libraries(${PROJECT_NAME} 
                       ${catkin_LIBRARIES}
@@ -86,6 +88,7 @@ target_link_libraries(${PROJECT_NAME}
                       Qt5::Gui 
                       )
 target_link_libraries(${PROJECT_NAME}_moveit_node ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}_plan_server_node ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 find_package(class_loader)
 class_loader_hide_library_symbols(${PROJECT_NAME})
