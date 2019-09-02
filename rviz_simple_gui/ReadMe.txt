@@ -1,18 +1,25 @@
-This Package provides the shell structure for a simple RVIZ Panel.
-Three buttons are provided which print out a simple message onto the
-terminal window.
+## **FMCG robotics solution pipeline documentation**
 
-This package is to be used as a shell each time you wish to create a new/blank GUI Panel
-in your RVIZ application.
+#### **QT5 graphical user interface development**
+The package utilizes the ui_simple_widget to create a GUI with customizable uis in Rviz.
+The developer could add buttons to trigger various processes.
 
-Install QT5 Creator to edit the simple_widget.ui so you can add new buttons/sliders etc.
+#### **motion planning module utilizing the moveit! c++ api development**
+The package contains moveit package for UR5 robot. By combining the moveit cpp API with the QT GUI, the package is able to
+trigger motion planning request to the moveit planner, and the planned path will be displayed in the Rviz panel.
 
-	sudo apt-get install qtcreator
-	sudo apt-get install qt5-default 
+commits @ September 2nd, 2019:
 
-To run the panel, build the catkin workspace and source it.
-Launch RVIZ and select the panels->add_new_panel menu
-from the title bar.
-You can then select the SimplePanel object,
-re-postition it the RVIZ side-bar and begin using it from there.
-	
+Successfully tested moveit motion planning for a random end-effector pose for the UR5 robot.
+
+Successfully created a moveit motion planner ROS service server node and a ROS service client node.
+
+Successfully linked up the start_planning button in the QT GUI with the motion planning service client node.
+
+** How to run the nodes **
+roslaunch rviz_simple_gui planning_gui.launch
+Then, click the "start_planning" button to start the planning process.
+** Result visualization **
+
+![result](imgs/moveit_gui.gif)
+
