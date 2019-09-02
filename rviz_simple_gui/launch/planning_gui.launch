@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+
+<launch>
+  <arg name="gui" default="true" />
+  <node name="rviz_gui" pkg="rviz_simple_gui" type="rviz_simple_gui_plan_server_node" output="screen"/>
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find rviz_simple_gui)/rviz/fmcg_gui.rviz" required="true" />
+</launch>
