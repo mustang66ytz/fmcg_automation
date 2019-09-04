@@ -12,13 +12,19 @@
 class moveit_planner
 {
 public:
+  // constructor for the moveit_planner class
   moveit_planner();
+  // this function will be executed when the service client is sending the request
   bool trigger_plan(rviz_simple_gui::MoveitPlanner::Request &req, rviz_simple_gui::MoveitPlanner::Response &res);
+  // this function sets the target pose for the planner, and executes the plan, finally return the planning result
   bool plan_computation(rviz_simple_gui::MoveitPlanner::Request &req);
-
-  ros::NodeHandle nh;
+  // node handle accessor
+  ros::NodeHandle get_nh(){
+    return nh;
+  }
 
 protected:
+  ros::NodeHandle nh;
   bool result;
   std::string PLANNING_GROUP;
 };

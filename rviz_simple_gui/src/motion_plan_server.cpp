@@ -8,16 +8,16 @@
 
 int main(int argc, char **argv)
 {
+  // initialize the ros service server node
   ros::init(argc, argv, "motion_plan_server");
-  //ros::NodeHandle nh;
-  // initialize a moveit_planner object
+  // initialize a moveit_planner object for motion planning purpose
   moveit_planner planner;
-  ros::ServiceServer service = planner.nh.advertiseService("motion_planning", &moveit_planner::trigger_plan, &planner);
+  // create a ros service called "motion_planning"
+  ros::ServiceServer service = planner.get_nh().advertiseService("motion_planning", &moveit_planner::trigger_plan, &planner);
   ROS_INFO("Ready to provide motion planning service");
+  // using asynchronous spinner to prevent single thread resource occupying issue
   ros::AsyncSpinner spinner(4); // Use 4 threads
   spinner.start();
   ros::waitForShutdown();
-  //ros::spin();
-
   return 0;
 }
