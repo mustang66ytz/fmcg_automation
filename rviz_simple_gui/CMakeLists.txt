@@ -77,10 +77,17 @@ add_library(${PROJECT_NAME}
   ${rviz_simple_gui_MOCS}
   ${rviz_simple_gui_SRCS}
 )
+# add library for moveit motion planning
 add_library(
   motion_planning
   include/rviz_simple_gui/moveit_planner.h
   src/moveit_planner.cpp
+)
+# add library for planning scene construction
+add_library(
+  scene_construction
+  include/rviz_simple_gui/planning_scene.h
+  src/planning_scene.cpp
 )
 add_executable(${PROJECT_NAME}_moveit_node src/moveit_node.cpp)
 ## add motion planning service server
