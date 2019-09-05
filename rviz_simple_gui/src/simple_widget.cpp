@@ -2,7 +2,7 @@
 #include "rviz_simple_gui/simple_widget.h"  
 #include "ui_simple_widget.h"
 #include "rviz_simple_gui/MoveitPlanner.h"
-
+#include "rviz_simple_gui/planning_scene.h"
 
 rviz_simple_gui::SimpleWidget::SimpleWidget(QWidget* parent)
     : QWidget(parent) 
@@ -11,13 +11,12 @@ rviz_simple_gui::SimpleWidget::SimpleWidget(QWidget* parent)
     ui_ = new Ui::SimpleWidget;
     ui_->setupUi(this);
 
-
     // Wire in buttons
     connect(ui_->pushButton_A, SIGNAL(clicked()), this, SLOT(pushButton_A_clicked()));
     connect(ui_->pushButton_B, SIGNAL(clicked()), this, SLOT(pushButton_B_clicked()));
     connect(ui_->pushButton_C, SIGNAL(clicked()), this, SLOT(pushButton_C_clicked()));
     connect(ui_->pushButtonPlanning, SIGNAL(clicked()), this, SLOT(pushButtonPlanning_clicked()));
-
+    connect(ui_->pushButtonAddCollisionOb, SIGNAL(clicked()), this, SLOT(pushButtonAddCollisionOb_clicked()));
     // setup a ROS nodehandle (not required in blank rviz panel, just gere to demonstrate where objects go)
     ros::NodeHandle nh_;
 }
@@ -75,5 +74,17 @@ void rviz_simple_gui::SimpleWidget::pushButtonPlanning_clicked(){
     {
       ROS_ERROR("Failed to call service motion_plan_server");
     }
+}
+
+void rviz_simple_gui::SimpleWidget::pushButtonAddCollisionOb_clicked(){
+    ROS_INFO_STREAM("Adding collisiion objects into the scene");
+    planning_scene scene;
+    // add a sqaure box into the scene
+    std::string block1_id = "front";
+    int block1_type = 1; // 1 is for box
+    std::vector<double> block1_dimension = {1, 0.1, 0.3};
+    std::vector<double> block1_pose = {0, 0.5, 0.25};
+    scene.add_object(block1_id, block1_type, block1_dimension, block1_pose);
+    scene.get_scene().addCollisionObjects(scene.get_blocks());
 }
 

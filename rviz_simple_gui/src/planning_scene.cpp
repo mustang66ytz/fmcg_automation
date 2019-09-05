@@ -7,7 +7,7 @@ planning_scene::planning_scene()
   ros::NodeHandle nh;
   // initialize a planning scene object
   moveit::planning_interface::PlanningSceneInterface curr_scene;
-
+  sleep(5);
 }
 
 // scene getter
@@ -26,24 +26,29 @@ void planning_scene::add_object(std::string &block_id, int block_type, std::vect
       std::cout<<"adding a box to the scene"<<std::endl;
       primitive.type = primitive.BOX;
       primitive.dimensions.resize(3);
-
+      break;
     }
     case 2:{
       std::cout<<"adding a sphere to the scene"<<std::endl;
       primitive.type = primitive.SPHERE;
       primitive.dimensions.resize(1);
+      break;
     }
     case 3:{
       std::cout<<"adding a cylinder to the scene"<<std::endl;
       primitive.type = primitive.CYLINDER;
       primitive.dimensions.resize(3);
+      break;
     }
     case 4:{
       std::cout<<"adding a cone to the scene"<<std::endl;
       primitive.dimensions.resize(2);
-
+      break;
     }
   }
+  primitive.dimensions[0] = dimension[0];
+  primitive.dimensions[1] = dimension[1];
+  primitive.dimensions[2] = dimension[2];
   // define the pose of the collision object
   geometry_msgs::Pose pose;
   pose.orientation.w = 1;

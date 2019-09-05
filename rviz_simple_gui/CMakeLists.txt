@@ -92,14 +92,18 @@ add_library(
 add_executable(${PROJECT_NAME}_moveit_node src/moveit_node.cpp)
 ## add motion planning service server
 add_executable(${PROJECT_NAME}_plan_server_node src/motion_plan_server.cpp)
+## add collision scene constructor
+add_executable(${PROJECT_NAME}_add_obstacle_node src/collision_publisher.cpp)
 
 target_link_libraries(${PROJECT_NAME} 
                       ${catkin_LIBRARIES}
                       Qt5::Widgets
                       Qt5::Gui 
+                      scene_construction
                       )
 target_link_libraries(${PROJECT_NAME}_moveit_node ${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 target_link_libraries(${PROJECT_NAME}_plan_server_node motion_planning ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}_add_obstacle_node scene_construction ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 find_package(class_loader)
 class_loader_hide_library_symbols(${PROJECT_NAME})
