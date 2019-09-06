@@ -16,10 +16,10 @@ Successfully created a moveit motion planner ROS service server node and a ROS s
 
 Successfully linked up the start_planning button in the QT GUI with the motion planning service client node.
 
-####** How to run the nodes **
+#### ** How to run the nodes **
 roslaunch rviz_simple_gui planning_gui.launch
 Then, click the "start_planning" button to start the planning process.
-####** Result visualization **
+#### ** Result visualization **
 
 ![result](imgs/gui_moveit.gif)
 
@@ -30,10 +30,10 @@ Successfully created a scene obstacle with ros service server
 
 Successfully integrated the add obstacle ros service server with the GUI.
 
-####** How to run the nodes **
+#### ** How to run the nodes **
 roslaunch rviz_simple_gui planning_gui.launch
 Then, click the "add_obstacle" button to start the planning process.
-####** Result visualization **
+#### ** Result visualization **
 
 ![result](imgs/moveit_gui_obstacle.gif)
 
