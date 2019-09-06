@@ -1,5 +1,7 @@
+#include <ros/ros.h>
 #include "rviz_simple_gui/planning_scene.h"
 #include <vector>
+
 // class constructor
 planning_scene::planning_scene()
 {
@@ -7,6 +9,7 @@ planning_scene::planning_scene()
   ros::NodeHandle nh;
   // initialize a planning scene object
   moveit::planning_interface::PlanningSceneInterface curr_scene;
+  ROS_INFO("initialize a scene");
   sleep(5);
 }
 
@@ -16,7 +19,8 @@ moveit::planning_interface::PlanningSceneInterface planning_scene::get_scene(){
 }
 
 // add collision block
-void planning_scene::add_object(std::string &block_id, int block_type, std::vector<double> dimension, std::vector<double> block_pose){
+bool planning_scene::add_object(std::string &block_id, int block_type, std::vector<double> dimension, std::vector<double> block_pose){
+  ROS_INFO("adding blocks!");
   moveit_msgs::CollisionObject block;
   block.id = block_id;
   shape_msgs::SolidPrimitive primitive;
@@ -62,8 +66,20 @@ void planning_scene::add_object(std::string &block_id, int block_type, std::vect
 
   // add the collision object to the list of collision objects
   collision_objects.push_back(block);
+  sleep(3);
+  curr_scene.applyCollisionObjects(this->collision_objects);
+  ROS_INFO("added a collision object into the scene");
+  return true;
 }
 
+// service client trigger function
+bool planning_scene::trigger_plan(rviz_simple_gui::AddObstacle::Request &req, rviz_simple_gui::AddObstacle::Response &res){
+  ROS_INFO("Adding collision obstacles!");
+  // call the plan_execution function for the add obstacle
+  res.success = this->add_object(req.block_id, req.block_type, req.block_dimension, req.block_pose);
+  ROS_INFO("add collision service server over");
+  return res.success;
+}
 // get collision blocks
 std::vector<moveit_msgs::CollisionObject> planning_scene::get_blocks(){
   return collision_objects;

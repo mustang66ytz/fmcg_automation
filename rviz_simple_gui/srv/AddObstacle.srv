@@ -1,0 +1,6 @@
+string block_id
+int32 block_type
+float64[] block_dimension
+float64[] block_pose
+---
+bool success

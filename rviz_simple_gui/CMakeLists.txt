@@ -23,6 +23,7 @@ find_package(Qt5Gui REQUIRED)
 add_service_files(
   FILES
   MoveitPlanner.srv
+  AddObstacle.srv
 )
 
 generate_messages(
@@ -92,6 +93,8 @@ add_library(
 add_executable(${PROJECT_NAME}_moveit_node src/moveit_node.cpp)
 ## add motion planning service server
 add_executable(${PROJECT_NAME}_plan_server_node src/motion_plan_server.cpp)
+## add collision obstacle creator service server
+add_executable(${PROJECT_NAME}_obstacle_server_node src/add_obstacle_server.cpp)
 ## add collision scene constructor
 add_executable(${PROJECT_NAME}_add_obstacle_node src/collision_publisher.cpp)
 
@@ -103,6 +106,7 @@ target_link_libraries(${PROJECT_NAME}
                       )
 target_link_libraries(${PROJECT_NAME}_moveit_node ${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 target_link_libraries(${PROJECT_NAME}_plan_server_node motion_planning ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}_obstacle_server_node scene_construction ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 target_link_libraries(${PROJECT_NAME}_add_obstacle_node scene_construction ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 find_package(class_loader)

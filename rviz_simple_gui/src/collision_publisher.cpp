@@ -15,7 +15,7 @@ int main(int argc, char **argv)
   std::vector<double> block1_dimension = {1, 0.2, 0.2};
   std::vector<double> block1_pose = {0, 0.5, 0.25};
   scene.add_object(block1_id, block1_type, block1_dimension, block1_pose);
-  scene.get_scene().addCollisionObjects(scene.get_blocks());
-
+  sleep(3);
+  scene.get_scene().applyCollisionObjects(scene.get_blocks());
   ros::spin();
 }

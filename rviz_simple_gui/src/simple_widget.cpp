@@ -3,6 +3,7 @@
 #include "ui_simple_widget.h"
 #include "rviz_simple_gui/MoveitPlanner.h"
 #include "rviz_simple_gui/planning_scene.h"
+#include "rviz_simple_gui/AddObstacle.h"
 
 rviz_simple_gui::SimpleWidget::SimpleWidget(QWidget* parent)
     : QWidget(parent) 
@@ -40,7 +41,7 @@ geometry_msgs::Pose setTarget(std::vector<double> target_pose){
 
 void rviz_simple_gui::SimpleWidget::pushButton_A_clicked()
 {
-    ROS_INFO_STREAM("Push Button A Clicked");
+    ROS_ERROR("Push Button A Clicked");
     ROS_INFO_STREAM("Create ROS Service client etc here to interface with external ROS services/topics etc");
 }
 
@@ -58,7 +59,7 @@ void rviz_simple_gui::SimpleWidget::pushButton_C_clicked()
 
 // this function starts a ros service client requesting a motion planning from the ros service server
 void rviz_simple_gui::SimpleWidget::pushButtonPlanning_clicked(){
-    ROS_INFO_STREAM("Triggering the motion planning module");
+    ROS_ERROR("Triggering the motion planning module");
     // initialize the motion planning client
     ros::ServiceClient client = nh_.serviceClient<rviz_simple_gui::MoveitPlanner>("motion_planning");
     rviz_simple_gui::MoveitPlanner srv;
@@ -77,14 +78,22 @@ void rviz_simple_gui::SimpleWidget::pushButtonPlanning_clicked(){
 }
 
 void rviz_simple_gui::SimpleWidget::pushButtonAddCollisionOb_clicked(){
-    ROS_INFO_STREAM("Adding collisiion objects into the scene");
-    planning_scene scene;
-    // add a sqaure box into the scene
-    std::string block1_id = "front";
-    int block1_type = 1; // 1 is for box
-    std::vector<double> block1_dimension = {1, 0.1, 0.3};
-    std::vector<double> block1_pose = {0, 0.5, 0.25};
-    scene.add_object(block1_id, block1_type, block1_dimension, block1_pose);
-    scene.get_scene().addCollisionObjects(scene.get_blocks());
+    ROS_ERROR("Adding collisiion objects into the scene");
+
+    // initialize the add obstacle client
+    ros::ServiceClient client = nh_.serviceClient<rviz_simple_gui::AddObstacle>("add_obstacle");
+    rviz_simple_gui::AddObstacle srv;
+    srv.request.block_id = "front";
+    srv.request.block_type = 3;
+    srv.request.block_dimension = {1, 0.2, 0.2};
+    srv.request.block_pose = {0, 0.5, 0.25};
+    if (client.call(srv))
+    {
+      ROS_INFO("Sum: %d", srv.response.success);
+    }
+    else
+    {
+      ROS_ERROR("Failed to call service add_obstacle_server");
+    }
 }
 
