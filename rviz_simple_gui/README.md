@@ -21,5 +21,19 @@ roslaunch rviz_simple_gui planning_gui.launch
 Then, click the "start_planning" button to start the planning process.
 ** Result visualization **
 
-![result](imgs/moveit_gui.gif)
+![result](imgs/gui_moveit.gif)
+
+
+commits @ September 6th, 2019:
+
+Successfully created a scene obstacle with ros service server
+
+Successfully integrated the add obstacle ros service server with the GUI.
+
+** How to run the nodes **
+roslaunch rviz_simple_gui planning_gui.launch
+Then, click the "add_obstacle" button to start the planning process.
+** Result visualization **
+
+![result](imgs/moveit_gui_obstacle.gif)
 
