@@ -4,6 +4,7 @@
 #include "rviz_simple_gui/MoveitPlanner.h"
 #include "rviz_simple_gui/planning_scene.h"
 #include "rviz_simple_gui/AddObstacle.h"
+#include <vector>
 
 rviz_simple_gui::SimpleWidget::SimpleWidget(QWidget* parent)
     : QWidget(parent) 
@@ -52,20 +53,20 @@ geometry_msgs::Pose setTarget(std::vector<double> target_pose){
 
 void rviz_simple_gui::SimpleWidget::pushButton_A_clicked()
 {
-    ROS_ERROR("Push Button A Clicked");
-    ROS_INFO_STREAM("Create ROS Service client etc here to interface with external ROS services/topics etc");
+    ROS_INFO("Target ID 0 is selected");
+    this->target_id = 0;
 }
 
 void rviz_simple_gui::SimpleWidget::pushButton_B_clicked()
 {
-    ROS_INFO_STREAM("Push Button B Clicked");
-    ROS_INFO_STREAM("Create ROS Service client etc here to interface with external ROS services/topics etc");
+  ROS_INFO("Target ID 1 is selected");
+  this->target_id = 1;
 } 
 
 void rviz_simple_gui::SimpleWidget::pushButton_C_clicked()
 {
-    ROS_INFO_STREAM("Push Button C Clicked");
-    ROS_INFO_STREAM("Create ROS Service client etc here to interface with external ROS services/topics etc");
+  ROS_INFO("Target ID 2 is selected");
+  this->target_id = 2;
 } 
 
 // this function starts a ros service client requesting a motion planning from the ros service server
@@ -76,7 +77,7 @@ void rviz_simple_gui::SimpleWidget::pushButtonPlanning_clicked(){
     rviz_simple_gui::MoveitPlanner srv;
     // define the target pose here
     std::vector<std::vector<double>> pose_candidates = {{0.0851781, -0.178383, 0.650531, 0.302129, -0.263213, 0.164935, 0.90124}, {-0.359662, 0.588864, 0.54586, 0.0790628, -0.532828, 0.387457, 0.748145}};
-    geometry_msgs::Pose target_pose = setTarget(pose_candidates[0]);
+    geometry_msgs::Pose target_pose = setTarget(pose_candidates[target_id]);
     srv.request.target = target_pose;
     if (client.call(srv))
     {
@@ -88,23 +89,46 @@ void rviz_simple_gui::SimpleWidget::pushButtonPlanning_clicked(){
     }
 }
 
-void rviz_simple_gui::SimpleWidget::pushButtonAddCollisionOb_clicked(){
-    ROS_ERROR("Adding collisiion objects into the scene");
-
+void rviz_simple_gui::SimpleWidget::addObjectPrimitive(std::string &block_id, int block_type, std::vector<double> block_dimension,
+                                                       std::vector<double> block_pose){
     // initialize the add obstacle client
     ros::ServiceClient client = nh_.serviceClient<rviz_simple_gui::AddObstacle>("add_obstacle");
     rviz_simple_gui::AddObstacle srv;
-    srv.request.block_id = "front";
-    srv.request.block_type = 3;
-    srv.request.block_dimension = {1, 0.2, 0.2};
-    srv.request.block_pose = {x_position, y_position, z_position};
+
+    // build the square box based on the position provided:
+    srv.request.block_id = block_id;
+    srv.request.block_type = block_type;
+    srv.request.block_dimension = block_dimension;
+    srv.request.block_pose = block_pose;
     if (client.call(srv))
     {
-      ROS_INFO("Sum: %d", srv.response.success);
+      ROS_INFO("Successfully added");
     }
     else
     {
       ROS_ERROR("Failed to call service add_obstacle_server");
+    }
+}
+
+void rviz_simple_gui::SimpleWidget::pushButtonAddCollisionOb_clicked(){
+    ROS_ERROR("Adding collisiion objects into the scene");
+    std::vector<std::string> block_id_group = {"front", "back", "left", "right", "bottom"};
+    for (auto block_id: block_id_group){
+      if (block_id == "front"){
+        addObjectPrimitive(block_id, 1, {0.1, 1, 0.3}, {x_position+0.5, y_position, z_position, 1});
+      }
+      if (block_id == "back"){
+        addObjectPrimitive(block_id, 1, {0.1, 1, 0.3}, {x_position-0.5, y_position, z_position, 1});
+      }
+      if (block_id == "left"){
+        addObjectPrimitive(block_id, 1, {1, 0.1, 0.3}, {x_position, y_position+0.5, z_position, 1});
+      }
+      if (block_id == "right"){
+        addObjectPrimitive(block_id, 1, {1, 0.1, 0.3}, {x_position, y_position-0.5, z_position, 1});
+      }
+      if (block_id == "bottom"){
+        addObjectPrimitive(block_id, 1, {1, 1, 0.1}, {x_position, y_position, z_position-0.1, 1});
+      }
     }
 }
 

@@ -55,7 +55,7 @@ bool planning_scene::add_object(std::string &block_id, int block_type, std::vect
   primitive.dimensions[2] = dimension[2];
   // define the pose of the collision object
   geometry_msgs::Pose pose;
-  pose.orientation.w = 1;
+  pose.orientation.w = block_pose[3];
   pose.position.x = block_pose[0];
   pose.position.y = block_pose[1];
   pose.position.z = block_pose[2];

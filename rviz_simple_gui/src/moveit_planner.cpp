@@ -24,6 +24,9 @@ bool moveit_planner::plan_computation(rviz_simple_gui::MoveitPlanner::Request &r
   moveit::planning_interface::MoveGroupInterface::Plan my_plan;
   moveit::planning_interface::MoveItErrorCode success = object.plan(my_plan);
   if (success.val == 1){
+    ROS_INFO("Executing the plan now!");
+    // moveit execution stage
+    object.move();
     return true;
   }
   else{

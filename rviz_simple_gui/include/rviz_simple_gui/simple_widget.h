@@ -40,6 +40,8 @@ protected Q_SLOTS:
   void pushButton_B_clicked();
   void pushButton_C_clicked(); 
   void pushButtonPlanning_clicked();
+  void addObjectPrimitive(std::string &block_id, int block_type, std::vector<double> block_dimension,
+                                                         std::vector<double> block_pose);
   void pushButtonAddCollisionOb_clicked();
   void sliderValueX(int k);
   void sliderValueY(int k);
@@ -52,9 +54,12 @@ protected:
   ros::NodeHandle nh_;
 
   // obstacle position
-  double x_position = 0;
-  double y_position = 0;
-  double z_position = 0;
+  double x_position = 0.0;
+  double y_position = 0.0;
+  double z_position = 0.0;
+
+  // stored targets selection
+  int target_id = 0;
 };
 }
 

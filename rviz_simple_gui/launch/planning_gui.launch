@@ -3,6 +3,7 @@
 <launch>
   <arg name="gui" default="true" />
   <node name="rviz_gui" pkg="rviz_simple_gui" type="rviz_simple_gui_plan_server_node" output="screen"/>
+  <node name="rviz_gui_obstacle" pkg="rviz_simple_gui" type="rviz_simple_gui_obstacle_server_node" output="screen"/>
 
 
   <!-- By default, we do not start a database (it can be large) -->

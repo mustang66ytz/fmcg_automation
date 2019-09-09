@@ -16,8 +16,8 @@
   <widget class="QPushButton" name="pushButton_A">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>40</y>
+     <x>160</x>
+     <y>250</y>
      <width>111</width>
      <height>27</height>
     </rect>
@@ -29,8 +29,8 @@
   <widget class="QPushButton" name="pushButton_B">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>80</y>
+     <x>160</x>
+     <y>280</y>
      <width>111</width>
      <height>27</height>
     </rect>
@@ -42,8 +42,8 @@
   <widget class="QPushButton" name="pushButton_C">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>120</y>
+     <x>160</x>
+     <y>310</y>
      <width>111</width>
      <height>27</height>
     </rect>
@@ -55,34 +55,34 @@
   <widget class="QPushButton" name="pushButtonPlanning">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>240</y>
-     <width>191</width>
-     <height>41</height>
+     <x>390</x>
+     <y>80</y>
+     <width>181</width>
+     <height>51</height>
     </rect>
    </property>
    <property name="text">
-    <string>StartPlanning</string>
+    <string>Start motion planning</string>
    </property>
   </widget>
   <widget class="QPushButton" name="pushButtonAddCollisionOb">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>180</y>
-     <width>161</width>
+     <x>390</x>
+     <y>20</y>
+     <width>181</width>
      <height>51</height>
     </rect>
    </property>
    <property name="text">
-    <string>AddObstacle</string>
+    <string>Add obstacle into scene</string>
    </property>
   </widget>
   <widget class="QSlider" name="obstacleX">
    <property name="geometry">
     <rect>
-     <x>220</x>
-     <y>70</y>
+     <x>190</x>
+     <y>50</y>
      <width>160</width>
      <height>16</height>
     </rect>
@@ -94,8 +94,8 @@
   <widget class="QSlider" name="obstacleY">
    <property name="geometry">
     <rect>
-     <x>220</x>
-     <y>120</y>
+     <x>190</x>
+     <y>100</y>
      <width>160</width>
      <height>16</height>
     </rect>
@@ -107,14 +107,65 @@
   <widget class="QSlider" name="obstacleZ">
    <property name="geometry">
     <rect>
-     <x>220</x>
-     <y>160</y>
+     <x>190</x>
+     <y>150</y>
      <width>160</width>
      <height>16</height>
     </rect>
    </property>
    <property name="orientation">
     <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="QTextEdit" name="textEdit">
+   <property name="geometry">
+    <rect>
+     <x>190</x>
+     <y>20</y>
+     <width>181</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="html">
+    <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Obstacle x position:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </widget>
+  <widget class="QTextEdit" name="textEdit_2">
+   <property name="geometry">
+    <rect>
+     <x>190</x>
+     <y>70</y>
+     <width>181</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="html">
+    <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Obstacle y position:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </widget>
+  <widget class="QTextEdit" name="textEdit_3">
+   <property name="geometry">
+    <rect>
+     <x>190</x>
+     <y>120</y>
+     <width>181</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="html">
+    <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Obstacle z position:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
  </widget>
