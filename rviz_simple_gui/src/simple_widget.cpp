@@ -18,6 +18,11 @@ rviz_simple_gui::SimpleWidget::SimpleWidget(QWidget* parent)
     connect(ui_->pushButton_C, SIGNAL(clicked()), this, SLOT(pushButton_C_clicked()));
     connect(ui_->pushButtonPlanning, SIGNAL(clicked()), this, SLOT(pushButtonPlanning_clicked()));
     connect(ui_->pushButtonAddCollisionOb, SIGNAL(clicked()), this, SLOT(pushButtonAddCollisionOb_clicked()));
+
+    // setting up the horizontal slider bar
+    ui_->obstacleX->setRange(0, 1000);
+    ui_->obstacleX->setSingleStep(1);
+    connect(ui_->obstacleX, SIGNAL(valueChanged(int)), this, SLOT(sliderValue(int)));
     // setup a ROS nodehandle (not required in blank rviz panel, just gere to demonstrate where objects go)
     ros::NodeHandle nh_;
 }
@@ -97,3 +102,6 @@ void rviz_simple_gui::SimpleWidget::pushButtonAddCollisionOb_clicked(){
     }
 }
 
+void rviz_simple_gui::SimpleWidget::sliderValue(int k){
+    ROS_INFO("Current value: %d", k);
+}

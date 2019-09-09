@@ -41,6 +41,7 @@ protected Q_SLOTS:
   void pushButton_C_clicked(); 
   void pushButtonPlanning_clicked();
   void pushButtonAddCollisionOb_clicked();
+  void sliderValue(int k);
 protected:
   // UI
   Ui::SimpleWidget* ui_; 
