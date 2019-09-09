@@ -20,9 +20,15 @@ rviz_simple_gui::SimpleWidget::SimpleWidget(QWidget* parent)
     connect(ui_->pushButtonAddCollisionOb, SIGNAL(clicked()), this, SLOT(pushButtonAddCollisionOb_clicked()));
 
     // setting up the horizontal slider bar
-    ui_->obstacleX->setRange(0, 1000);
+    ui_->obstacleX->setRange(-20, 20);
     ui_->obstacleX->setSingleStep(1);
-    connect(ui_->obstacleX, SIGNAL(valueChanged(int)), this, SLOT(sliderValue(int)));
+    ui_->obstacleY->setRange(-20, 20);
+    ui_->obstacleY->setSingleStep(1);
+    ui_->obstacleZ->setRange(-20, 20);
+    ui_->obstacleZ->setSingleStep(1);
+    connect(ui_->obstacleX, SIGNAL(valueChanged(int)), this, SLOT(sliderValueX(int)));
+    connect(ui_->obstacleY, SIGNAL(valueChanged(int)), this, SLOT(sliderValueY(int)));
+    connect(ui_->obstacleZ, SIGNAL(valueChanged(int)), this, SLOT(sliderValueZ(int)));
     // setup a ROS nodehandle (not required in blank rviz panel, just gere to demonstrate where objects go)
     ros::NodeHandle nh_;
 }
@@ -91,7 +97,7 @@ void rviz_simple_gui::SimpleWidget::pushButtonAddCollisionOb_clicked(){
     srv.request.block_id = "front";
     srv.request.block_type = 3;
     srv.request.block_dimension = {1, 0.2, 0.2};
-    srv.request.block_pose = {0, 0.5, 0.25};
+    srv.request.block_pose = {x_position, y_position, z_position};
     if (client.call(srv))
     {
       ROS_INFO("Sum: %d", srv.response.success);
@@ -102,6 +108,20 @@ void rviz_simple_gui::SimpleWidget::pushButtonAddCollisionOb_clicked(){
     }
 }
 
-void rviz_simple_gui::SimpleWidget::sliderValue(int k){
-    ROS_INFO("Current value: %d", k);
+void rviz_simple_gui::SimpleWidget::sliderValueX(int k){
+    double k_ = k/10.0;
+    ROS_INFO("updating x position to: %f", k_);
+    x_position = k_;
+}
+
+void rviz_simple_gui::SimpleWidget::sliderValueY(int k){
+    double k_ = k/10.0;
+    ROS_INFO("updating y position to: %f", k_);
+    y_position = k_;
+}
+
+void rviz_simple_gui::SimpleWidget::sliderValueZ(int k){
+    double k_ = k/10.0;
+    ROS_INFO("updating z position to: %f", k_);
+    z_position = k_;
 }

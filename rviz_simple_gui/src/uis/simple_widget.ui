@@ -104,6 +104,19 @@
     <enum>Qt::Horizontal</enum>
    </property>
   </widget>
+  <widget class="QSlider" name="obstacleZ">
+   <property name="geometry">
+    <rect>
+     <x>220</x>
+     <y>160</y>
+     <width>160</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections/>

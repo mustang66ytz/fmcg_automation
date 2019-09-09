@@ -41,7 +41,9 @@ protected Q_SLOTS:
   void pushButton_C_clicked(); 
   void pushButtonPlanning_clicked();
   void pushButtonAddCollisionOb_clicked();
-  void sliderValue(int k);
+  void sliderValueX(int k);
+  void sliderValueY(int k);
+  void sliderValueZ(int k);
 protected:
   // UI
   Ui::SimpleWidget* ui_; 
@@ -49,6 +51,10 @@ protected:
   // ROS specific stuff
   ros::NodeHandle nh_;
 
+  // obstacle position
+  double x_position = 0;
+  double y_position = 0;
+  double z_position = 0;
 };
 }
 
