@@ -1,0 +1,137 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro"
+       name="ur10" >
+
+  <xacro:arg name="transmission_hw_interface" default="hardware_interface/PositionJointInterface"/>
+
+  <!-- common stuff -->
+  <xacro:include filename="$(find ur_description)/urdf/common.gazebo.xacro" />
+
+  <!-- ur10 -->
+  <xacro:include filename="$(find ur_description)/urdf/ur10.urdf.xacro" />
+
+  <!-- arm -->
+  <xacro:ur10_robot prefix="" joint_limited="false"
+    transmission_hw_interface="$(arg transmission_hw_interface)"
+  />
+
+  <material name="blue">
+    <color rgba="0 0 0.7 1"/>
+  </material>
+
+  <material name="white">
+    <color rgba="1 1 1 1"/>
+  </material>
+
+  <material name="green">
+    <color rgba="0 0.5 0 1"/>
+  </material>
+
+  <!-- define the table to mount the robot on-->
+  <link name="table">
+    <visual>
+      <geometry>
+        <box size="0.5 0.5 1.05"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0 0 0.525"/>
+      <material name="blue"/>
+    </visual>
+  </link>
+
+  <joint name="table_joint" type="fixed">
+    <parent link="table" />
+    <child link="base_link" />
+    <origin xyz="0.0 0.0 1.05" rpy="0.0 0.0 0.0" />
+  </joint>
+
+  <link name="world" />
+
+  <joint name="world_joint" type="fixed">
+    <parent link="world" />
+    <child link = "table" />
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+  </joint>
+
+  <!-- define the conveyor to hold the box -->
+  <link name="conveyor">
+    <visual>
+      <geometry>
+        <box size="0.66 2 0.75"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0.7 0 0.375"/>
+      <material name="green"/>
+    </visual>
+  </link>
+
+  <joint name="world_joint_conveyor" type="fixed">
+    <parent link="world" />
+    <child link = "conveyor" />
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+  </joint>
+
+  <!-- define the box on conveyor -->
+  <link name="box_front">
+    <visual>
+      <geometry>
+        <box size="0.03 0.59 0.2"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0.7 0 0.85"/>
+      <material name="white"/>
+    </visual>
+  </link>
+
+  <joint name="conveyor_joint_front" type="fixed">
+    <parent link="conveyor" />
+    <child link = "box_front" />
+    <origin xyz="0.19 0 0" rpy="0 0 0" />
+  </joint>
+
+  <link name="box_back">
+    <visual>
+      <geometry>
+        <box size="0.03 0.59 0.2"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0.7 0 0.85"/>
+      <material name="white"/>
+    </visual>
+  </link>
+
+  <joint name="conveyor_joint_back" type="fixed">
+    <parent link="conveyor" />
+    <child link = "box_back" />
+    <origin xyz="-0.19 0 0" rpy="0 0 0" />
+  </joint>
+
+  <link name="box_left">
+    <visual>
+      <geometry>
+        <box size="0.39 0.03 0.2"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0.7 0 0.85"/>
+      <material name="white"/>
+    </visual>
+  </link>
+
+  <joint name="conveyor_joint_left" type="fixed">
+    <parent link="conveyor" />
+    <child link = "box_left" />
+    <origin xyz="0 0.29 0" rpy="0 0 0" />
+  </joint>
+
+  <link name="box_right">
+    <visual>
+      <geometry>
+        <box size="0.39 0.03 0.2"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0.7 0 0.85"/>
+      <material name="white"/>
+    </visual>
+  </link>
+
+  <joint name="conveyor_joint_right" type="fixed">
+    <parent link="conveyor" />
+    <child link = "box_right" />
+    <origin xyz="0 -0.29 0" rpy="0 0 0" />
+  </joint>
+
+</robot>
