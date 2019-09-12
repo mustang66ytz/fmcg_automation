@@ -97,6 +97,8 @@ add_executable(${PROJECT_NAME}_plan_server_node src/motion_plan_server.cpp)
 add_executable(${PROJECT_NAME}_obstacle_server_node src/add_obstacle_server.cpp)
 ## add collision scene constructor
 add_executable(${PROJECT_NAME}_add_obstacle_node src/collision_publisher.cpp)
+## add end-effector position tracker
+add_executable(${PROJECT_NAME}_position_tracking_node src/position_tracker.cpp)
 
 target_link_libraries(${PROJECT_NAME} 
                       ${catkin_LIBRARIES}
@@ -108,6 +110,7 @@ target_link_libraries(${PROJECT_NAME}_moveit_node ${PROJECT_NAME} ${catkin_LIBRA
 target_link_libraries(${PROJECT_NAME}_plan_server_node motion_planning ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 target_link_libraries(${PROJECT_NAME}_obstacle_server_node scene_construction ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 target_link_libraries(${PROJECT_NAME}_add_obstacle_node scene_construction ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}_position_tracking_node ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 find_package(class_loader)
 class_loader_hide_library_symbols(${PROJECT_NAME})

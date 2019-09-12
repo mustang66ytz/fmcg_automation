@@ -53,19 +53,19 @@ geometry_msgs::Pose setTarget(std::vector<double> target_pose){
 
 void rviz_simple_gui::SimpleWidget::pushButton_A_clicked()
 {
-    ROS_INFO("Target ID 0 is selected");
+    ROS_INFO("inside box pose is selected");
     this->target_id = 0;
 }
 
 void rviz_simple_gui::SimpleWidget::pushButton_B_clicked()
 {
-  ROS_INFO("Target ID 1 is selected");
+  ROS_INFO("home pose is selected");
   this->target_id = 1;
 } 
 
 void rviz_simple_gui::SimpleWidget::pushButton_C_clicked()
 {
-  ROS_INFO("Target ID 2 is selected");
+  ROS_INFO("up-straight pose is selected");
   this->target_id = 2;
 } 
 
@@ -76,7 +76,9 @@ void rviz_simple_gui::SimpleWidget::pushButtonPlanning_clicked(){
     ros::ServiceClient client = nh_.serviceClient<rviz_simple_gui::MoveitPlanner>("motion_planning");
     rviz_simple_gui::MoveitPlanner srv;
     // define the target pose here
-    std::vector<std::vector<double>> pose_candidates = {{0.0851781, -0.178383, 0.650531, 0.302129, -0.263213, 0.164935, 0.90124}, {-0.359662, 0.588864, 0.54586, 0.0790628, -0.532828, 0.387457, 0.748145}};
+    std::vector<double> home_pose = {1.18431, 0.256129, 1.06171, 3.41224e-05, 0.707126, 0.707087, 3.41215e-05};
+    std::vector<double> up_pose = {0.000207902, 0.256141, 2.4773, 0.707103, 0.000142007, 0.000142024, 0.707111};
+    std::vector<std::vector<double>> pose_candidates = {{0.808644, 0.192714, 0.993994, 0.000165724, -0.707075, -0.707139, -9.5012e-05}, home_pose, up_pose};
     geometry_msgs::Pose target_pose = setTarget(pose_candidates[target_id]);
     srv.request.target = target_pose;
     if (client.call(srv))
