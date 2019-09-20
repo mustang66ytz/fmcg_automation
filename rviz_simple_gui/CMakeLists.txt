@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   geometry_msgs
   message_generation
+  rviz_visual_tools
 )
 
 find_package(Qt5Widgets REQUIRED)
@@ -70,6 +71,7 @@ include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
   ${rviz_simple_gui_INCLUDE_DIRECTORIES}
+  /usr/local/include
 )
 
 ## Declare a cpp library
@@ -111,6 +113,7 @@ target_link_libraries(${PROJECT_NAME}_plan_server_node motion_planning ${catkin_
 target_link_libraries(${PROJECT_NAME}_obstacle_server_node scene_construction ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 target_link_libraries(${PROJECT_NAME}_add_obstacle_node scene_construction ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 target_link_libraries(${PROJECT_NAME}_position_tracking_node ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
 
 find_package(class_loader)
 class_loader_hide_library_symbols(${PROJECT_NAME})

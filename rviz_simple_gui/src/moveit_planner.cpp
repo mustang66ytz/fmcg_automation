@@ -12,7 +12,25 @@ bool moveit_planner::trigger_plan(rviz_simple_gui::MoveitPlanner::Request &req, 
   ROS_INFO("Planner executing!");
   // call the plan_execution function for the moveit path planning
   res.success = this->plan_computation(req);
+  this->visualization();
   return res.success;
+}
+
+bool moveit_planner::visualization(){
+  // For visualizing things in rviz
+  rviz_visual_tools::RvizVisualToolsPtr visual_tools_;
+  visual_tools_.reset(new rviz_visual_tools::RvizVisualTools("base","/rviz_visual_markers"));
+  // Create pose
+  Eigen::Isometry3d pose;
+  pose = Eigen::AngleAxisd(M_PI/4, Eigen::Vector3d::UnitY()); // rotate along X axis by 45 degrees
+  pose.translation() = Eigen::Vector3d( 0.1, 0.1, 3 ); // translate x,y,z
+  // Publish arrow vector of pose
+  ROS_ERROR("Visualizing the markers!");
+  visual_tools_->publishArrow(pose, rviz_visual_tools::RED, rviz_visual_tools::LARGE);
+
+  // Don't forget to trigger the publisher!
+  visual_tools_->trigger();
+  return true;
 }
 
 // this function sets the target pose for the planner, and executes the plan, finally return the planning result
