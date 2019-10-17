@@ -225,19 +225,23 @@ template<typename F>
           std::cout << "No solution found" << std::endl;
   }
 
+ void res_visualizer(){
+   // publish the path and the environment to the visualizer
+   ros::NodeHandle n;
+   ros::Publisher path_pub = n.advertise<ompl_test::Waypoint>("trajectory_pose", 100);
+   ros::Rate loop_rate(10);
+   while(ros::ok()){
+     ompl_test::Waypoint msg;
+     msg.target = path1d;
+     path_pub.publish(msg);
+     loop_rate.sleep();
+   }
+ }
 int main(int argc, char **argv)
 {
     std::cout << "OMPL version: " << OMPL_VERSION << std::endl;
     planWithSimpleSetup();
     ros::init(argc, argv, "path_planner_node");
-    ros::NodeHandle n;
-    ros::Publisher chatter_pub = n.advertise<ompl_test::Waypoint>("trajectory_pose", 100);
-    ros::Rate loop_rate(10);
-    while(ros::ok()){
-      ompl_test::Waypoint msg;
-      msg.target = path1d;
-      chatter_pub.publish(msg);
-      loop_rate.sleep();
-    }
+    res_visualizer();
     return 0;
 }

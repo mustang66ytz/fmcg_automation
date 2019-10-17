@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+
+<launch>
+	<!-- launch the ompl planning node-->
+	<node name="rigid_planning_control_node" pkg="ompl_test" type="ompl_test_rigid_planning_control_node" output="screen"/>
+	<!-- launch the visualiztion node-->
+	<node name="visualizer_node" pkg="ompl_test" type="ompl_visualizer.py" output="screen"/>
+	<!-- launch the rviz node -->
+        <node name="rviz" pkg="rviz" type="rviz" args="-d $(find ompl_test)/rviz/ompl.rviz -f /World" required="true" output="screen"/>
+</launch>
