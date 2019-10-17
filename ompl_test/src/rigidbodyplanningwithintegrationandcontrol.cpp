@@ -151,17 +151,31 @@ template<typename F>
       EulerIntegrator<KinematicCarModel> integrator_;
   };
 
+ // this function processes the path planned
  void resultProcessor(oc::SimpleSetup &ss){
    oc::PathControl solution_path = ss.getSolutionPath();
    std::vector<ob::State* >& states = solution_path.getStates();
    std::vector<oc::Control* >& controls = solution_path.getControls();
    std::vector<std::vector<double>> path;
+   std::vector<std::vector<double>> control_signal;
    // test the result construction
    for(int i=0; i!=states.size(); i++){
        std::vector<double> row;
        double x = states[i]->as<ob::SE2StateSpace::StateType>()->getX();
        double y = states[i]->as<ob::SE2StateSpace::StateType>()->getY();
        double yaw = states[i]->as<ob::SE2StateSpace::StateType>()->getYaw();
+       if(i<states.size()-1){
+         std::vector<double> control_row;
+         double x_control = controls[i]->as<oc::RealVectorControlSpace::ControlType>()->values[0];
+         double y_control = controls[i]->as<oc::RealVectorControlSpace::ControlType>()->values[1];
+         double yaw_control = controls[i]->as<oc::RealVectorControlSpace::ControlType>()->values[2];
+         control_row.push_back(x_control);
+         control_row.push_back(y_control);
+         control_row.push_back(yaw_control);
+         control_signal.push_back(control_row);
+         //std::cout<<"control x:"<<x_control<<std::endl;
+       }
+
        row.push_back(x);
        row.push_back(y);
        row.push_back(yaw);
@@ -171,9 +185,17 @@ template<typename F>
        path1d.push_back(yaw);
    }
    //print the solution path
+   /*
   for (int i=0; i<path.size(); i++){
       for(int j=0; j<3; j++){
           std::cout<<path[i][j]<<" ";
+      }
+      std::cout<<std::endl;
+   }*/
+   //print the control signals
+  for (int i=0; i<control_signal.size(); i++){
+      for(int j=0; j<3; j++){
+          std::cout<<control_signal[i][j]<<" ";
       }
       std::cout<<std::endl;
    }
@@ -216,8 +238,6 @@ template<typename F>
       if (solved)
       {
           std::cout << "Found solution:" << std::endl;
-          // convert the path to a vector
-          std::vector<std::vector<double>> path;
           resultProcessor(ss);
           //ss.getSolutionPath().asGeometric().printAsMatrix(std::cout);
       }

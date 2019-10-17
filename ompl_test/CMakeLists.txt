@@ -15,6 +15,8 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   ompl
   visualization_msgs
+  tf
+  nav_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -139,6 +141,8 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}_simple_test_node src/ompl_simple_test.cpp)
 add_executable(${PROJECT_NAME}_rigid_planning_control_node src/rigidbodyplanningwithintegrationandcontrol.cpp)
+add_executable(${PROJECT_NAME}_navigate_agv_node src/navigate_agv.cpp)
+add_executable(${PROJECT_NAME}_agv_tf_node src/agv_tf.cpp)
 ## add_executable(${PROJECT_NAME}_kinematics_car_planning_node src/kincarplanning.cpp)
 
 ## Rename C++ executable without prefix
@@ -160,6 +164,15 @@ target_link_libraries(${PROJECT_NAME}_rigid_planning_control_node
   ${catkin_LIBRARIES}
   ${OMPL_LIBRARIES}
 )
+target_link_libraries(${PROJECT_NAME}_navigate_agv_node
+  ${catkin_LIBRARIES}
+  ${OMPL_LIBRARIES}
+)
+target_link_libraries(${PROJECT_NAME}_agv_tf_node
+  ${catkin_LIBRARIES}
+  ${OMPL_LIBRARIES}
+)
+
 
 #############
 ## Install ##
