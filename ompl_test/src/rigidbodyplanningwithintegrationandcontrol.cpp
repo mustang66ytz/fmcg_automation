@@ -6,6 +6,7 @@
 #include <ompl/control/planners/rrt/RRT.h>
 #include <ompl/control/SimpleSetup.h>
 #include <ompl/config.h>
+#include <ompl/tools/benchmark/Benchmark.h>
 #include <iostream>
 #include <valarray>
 #include <limits>
@@ -147,86 +148,71 @@ template<typename F>
       EulerIntegrator<KinematicCarModel> integrator_;
   };
 
+ void resultProcessor(oc::SimpleSetup &ss){
+   oc::PathControl solution_path = ss.getSolutionPath();
+   std::vector<ob::State* >& states = solution_path.getStates();
+   std::vector<oc::Control* >& controls = solution_path.getControls();
+   std::vector<std::vector<double>> path;
+   // test the result construction
+   for(int i=0; i!=states.size(); i++){
+       std::vector<double> row;
+       double x = states[i]->as<ob::SE2StateSpace::StateType>()->getX();
+       double y = states[i]->as<ob::SE2StateSpace::StateType>()->getY();
+       double yaw = states[i]->as<ob::SE2StateSpace::StateType>()->getYaw();
+       row.push_back(x);
+       row.push_back(y);
+       row.push_back(yaw);
+       path.push_back(row);
+   }
+   //print the solution path
+  for (int i=0; i<path.size(); i++){
+      for(int j=0; j<3; j++){
+          std::cout<<path[i][j]<<" ";
+      }
+      std::cout<<std::endl;
+   }
+ }
+
  void planWithSimpleSetup()
   {
       auto space(std::make_shared<ob::SE2StateSpace>());
-
       ob::RealVectorBounds bounds(2);
       bounds.setLow(-1);
       bounds.setHigh(1);
-
       space->setBounds(bounds);
       // create a control space
       auto cspace(std::make_shared<DemoControlSpace>(space));
-
       // set the bounds for the control space
       ob::RealVectorBounds cbounds(2);
       cbounds.setLow(-0.3);
       cbounds.setHigh(0.3);
       cspace->setBounds(cbounds);
-
       // define a simple setup class
       oc::SimpleSetup ss(cspace);
       oc::SpaceInformation *si = ss.getSpaceInformation().get();
       ss.setStateValidityChecker(
           [si](const ob::State *state) { return isStateValid(si, state); });
-
       auto propagator(std::make_shared<DemoStatePropagator>(si));
       ss.setStatePropagator(propagator);
-
       ob::ScopedState<ob::SE2StateSpace> start(space);
       start->setX(-0.5);
       start->setY(0.0);
       start->setYaw(0.0);
-
       ob::ScopedState<ob::SE2StateSpace> goal(space);
       goal->setX(0.0);
       goal->setY(0.5);
       goal->setYaw(0.0);
-
       ss.setStartAndGoalStates(start, goal, 0.05);
-
       ss.setup();
       propagator->setIntegrationTimeStep(si->getPropagationStepSize());
-
       ob::PlannerStatus solved = ss.solve(10.0);
 
       if (solved)
       {
           std::cout << "Found solution:" << std::endl;
           // convert the path to a vector
-
-          std::vector<ob::State*> waypoints = ss.getSolutionPath().asGeometric().getStates();
-          std::vector<double> path;
-          int count = 0;
-          for (auto waypoint: waypoints)
-          {
-            double currYaw = waypoint->as<ob::SE2StateSpace::StateType>()->getYaw();
-            std::cout << ++count << ": " << currYaw << std::endl;
-          }
-          // print the solution path
-          for (int i=0; i<path.size(); i++){
-              std::cout<<path[i]<<" ";
-          }
-
-
-//          for (auto waypoint = waypoints.begin(); waypoint != waypoints.end(); waypoint++){
-//            std::vector<double> curr_point;
-//            std::cout<<(*waypoint)->as<ob::SE2StateSpace::StateType>()->getYaw();
-//            std::cout<<(*waypoint)->as<ob::SE2StateSpace::StateType>()->getX();
-//            double curry = (*waypoint)->as<ob::SE2StateSpace::StateType>()->getY();
-//            double curryaw = (*waypoint)->as<ob::SE2StateSpace::StateType>()->getYaw();
-//            //curr_point.push_back(currx);
-//            curr_point.push_back(curry);
-//            curr_point.push_back(curryaw);
-//          }
-//          // print the solution path
-//          for (int i=0; i<path.size(); i++){
-//            for(int j=0; j<3; j++){
-//              std::cout<<path[i][j]<<" ";
-//            }
-//            std::cout<<std::endl;
-//          }
+          std::vector<std::vector<double>> path;
+          resultProcessor(ss);
           //ss.getSolutionPath().asGeometric().printAsMatrix(std::cout);
       }
       else
@@ -236,8 +222,6 @@ template<typename F>
 int main(int /*argc*/, char ** /*argv*/)
 {
     std::cout << "OMPL version: " << OMPL_VERSION << std::endl;
-
     planWithSimpleSetup();
-
     return 0;
 }
