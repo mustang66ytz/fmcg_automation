@@ -11,9 +11,12 @@
 #include <valarray>
 #include <limits>
 #include <vector>
+#include "ros/ros.h"
+#include "ompl_test/Waypoint.h"
 
 namespace ob = ompl::base;
 namespace oc = ompl::control;
+std::vector<double> path1d;
 
 // this class defines the kinematics car model (kinematics bicycle model)
 class KinematicCarModel
@@ -163,6 +166,9 @@ template<typename F>
        row.push_back(y);
        row.push_back(yaw);
        path.push_back(row);
+       path1d.push_back(x);
+       path1d.push_back(y);
+       path1d.push_back(yaw);
    }
    //print the solution path
   for (int i=0; i<path.size(); i++){
@@ -219,9 +225,19 @@ template<typename F>
           std::cout << "No solution found" << std::endl;
   }
 
-int main(int /*argc*/, char ** /*argv*/)
+int main(int argc, char **argv)
 {
     std::cout << "OMPL version: " << OMPL_VERSION << std::endl;
     planWithSimpleSetup();
+    ros::init(argc, argv, "path_planner_node");
+    ros::NodeHandle n;
+    ros::Publisher chatter_pub = n.advertise<ompl_test::Waypoint>("trajectory_pose", 100);
+    ros::Rate loop_rate(10);
+    while(ros::ok()){
+      ompl_test::Waypoint msg;
+      msg.target = path1d;
+      chatter_pub.publish(msg);
+      loop_rate.sleep();
+    }
     return 0;
 }
