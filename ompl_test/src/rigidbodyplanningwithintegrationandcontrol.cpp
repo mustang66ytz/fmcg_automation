@@ -12,11 +12,15 @@
 #include <limits>
 #include <vector>
 #include "ros/ros.h"
+#include <tf/transform_broadcaster.h>
+#include <nav_msgs/Odometry.h>
 #include "ompl_test/Waypoint.h"
 
 namespace ob = ompl::base;
 namespace oc = ompl::control;
 std::vector<double> path1d;
+std::vector<std::vector<double>> path;
+std::vector<std::vector<double>> control_signal;
 
 // this class defines the kinematics car model (kinematics bicycle model)
 class KinematicCarModel
@@ -156,8 +160,7 @@ template<typename F>
    oc::PathControl solution_path = ss.getSolutionPath();
    std::vector<ob::State* >& states = solution_path.getStates();
    std::vector<oc::Control* >& controls = solution_path.getControls();
-   std::vector<std::vector<double>> path;
-   std::vector<std::vector<double>> control_signal;
+
    // test the result construction
    for(int i=0; i!=states.size(); i++){
        std::vector<double> row;
@@ -245,6 +248,58 @@ template<typename F>
           std::cout << "No solution found" << std::endl;
   }
 
+ // this function visualizes the car movement
+ void move_car(){
+   ros::NodeHandle n;
+   ros::Publisher odom_pub = n.advertise<nav_msgs::Odometry>("odom", 50);
+   tf::TransformBroadcaster odom_broadcaster;
+   ros::Rate r(5);
+   // iterate through the result states
+   while(ros::ok()){
+     std::cout<<"publishing the trajectory states to odom"<<std::endl;
+     for(int i=0; i<path.size(); i++){
+       ros::Time current_time = ros::Time::now();
+       double x = path[i][0]; // define the x position
+       double y = path[i][1]; // define the y position
+       double yaw = path[i][2]; //define the yaw
+       //since all odometry is 6DOF we'll need a quaternion created from yaw
+       geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(yaw);
+       //first, we'll publish the transform over tf
+       geometry_msgs::TransformStamped odom_trans;
+       odom_trans.header.stamp = current_time;
+       odom_trans.header.frame_id = "odom";
+       odom_trans.child_frame_id = "base_link";
+       odom_trans.transform.translation.x = x;
+       odom_trans.transform.translation.y = y;
+       odom_trans.transform.translation.z = 0.0;
+       odom_trans.transform.rotation = odom_quat;
+
+       //send the transform
+       odom_broadcaster.sendTransform(odom_trans);
+       //next, we'll publish the odometry message over ROS
+       nav_msgs::Odometry odom;
+       odom.header.stamp = current_time;
+       odom.header.frame_id = "odom";
+
+       //set the position
+       odom.pose.pose.position.x = x;
+       odom.pose.pose.position.y = y;
+       odom.pose.pose.position.z = 0.0;
+       odom.pose.pose.orientation = odom_quat;
+
+       //set the velocity
+       odom.child_frame_id = "base_link";
+       odom.twist.twist.linear.x = 0;
+       odom.twist.twist.linear.y = 0;
+       odom.twist.twist.angular.z = 0;
+
+       //publish the message
+       odom_pub.publish(odom);
+       r.sleep();
+     }
+   }
+
+ }
  void res_visualizer(){
    // publish the path and the environment to the visualizer
    ros::NodeHandle n;
@@ -262,6 +317,7 @@ int main(int argc, char **argv)
     std::cout << "OMPL version: " << OMPL_VERSION << std::endl;
     planWithSimpleSetup();
     ros::init(argc, argv, "path_planner_node");
-    res_visualizer();
+    //res_visualizer();
+    move_car();
     return 0;
 }
