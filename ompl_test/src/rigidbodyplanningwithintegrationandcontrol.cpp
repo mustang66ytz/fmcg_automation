@@ -249,15 +249,26 @@ template<typename F>
   }
 
  // this function visualizes the car movement
- void move_car(){
+ void move_car(ros::NodeHandle &n){
+   //ros::NodeHandle n;
+ }
+
+ void res_visualizer(){
+   // publish the path and the environment to the visualizer
    ros::NodeHandle n;
-   ros::Publisher odom_pub = n.advertise<nav_msgs::Odometry>("odom", 50);
-   tf::TransformBroadcaster odom_broadcaster;
-   ros::Rate r(5);
-   // iterate through the result states
+   ros::Publisher path_pub = n.advertise<ompl_test::Waypoint>("trajectory_pose", 100);
+   ros::Rate loop_rate(10);
    while(ros::ok()){
+     ompl_test::Waypoint msg;
+     msg.target = path1d;
+     //move_car(n);
+     ros::Publisher odom_pub = n.advertise<nav_msgs::Odometry>("odom", 50);
+     tf::TransformBroadcaster odom_broadcaster;
+     ros::Rate r(5);
+     // iterate through the result states
      std::cout<<"publishing the trajectory states to odom"<<std::endl;
      for(int i=0; i<path.size(); i++){
+       path_pub.publish(msg);
        ros::Time current_time = ros::Time::now();
        double x = path[i][0]; // define the x position
        double y = path[i][1]; // define the y position
@@ -297,27 +308,16 @@ template<typename F>
        odom_pub.publish(odom);
        r.sleep();
      }
-   }
-
- }
- void res_visualizer(){
-   // publish the path and the environment to the visualizer
-   ros::NodeHandle n;
-   ros::Publisher path_pub = n.advertise<ompl_test::Waypoint>("trajectory_pose", 100);
-   ros::Rate loop_rate(10);
-   while(ros::ok()){
-     ompl_test::Waypoint msg;
-     msg.target = path1d;
-     path_pub.publish(msg);
      loop_rate.sleep();
    }
  }
+
 int main(int argc, char **argv)
 {
     std::cout << "OMPL version: " << OMPL_VERSION << std::endl;
     planWithSimpleSetup();
     ros::init(argc, argv, "path_planner_node");
-    //res_visualizer();
-    move_car();
+    res_visualizer();
+    //move_car();
     return 0;
 }
