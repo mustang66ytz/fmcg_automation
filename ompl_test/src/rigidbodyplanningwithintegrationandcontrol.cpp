@@ -7,6 +7,9 @@
 #include <ompl/control/SimpleSetup.h>
 #include <ompl/config.h>
 #include <ompl/tools/benchmark/Benchmark.h>
+#include <ompl/base/SpaceInformation.h>
+#include <ompl/base/Planner.h>
+#include <ompl/geometric/SimpleSetup.h>
 #include <iostream>
 #include <valarray>
 #include <limits>
@@ -110,6 +113,10 @@ template<typename F>
  };
 
 // check if the current state is valid
+ bool isStateValid(const ob::State *state){
+   return true;
+ }
+
 bool isStateValid(const oc::SpaceInformation *si, const ob::State *state)
 {
    //    ob::ScopedState<ob::SE2StateSpace>
@@ -226,6 +233,12 @@ void planWithSimpleSetup()
         [si](const ob::State *state) { return isStateValid(si, state); });
     auto propagator(std::make_shared<DemoStatePropagator>(si));
     ss.setStatePropagator(propagator);
+    ss.setPlanner(std::make_shared<oc::RRT>(ss.getSpaceInformation()));
+    /*
+    ompl::control::RRT planner(std::make_shared<oc::SpaceInformation>(si));
+    ob::PlannerPtr obplanner(&planner);
+    ss.setPlanner(obplanner);
+    */
     ob::ScopedState<ob::SE2StateSpace> start(space);
     start->setX(-0.5);
     start->setY(0.0);
