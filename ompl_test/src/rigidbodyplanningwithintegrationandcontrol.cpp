@@ -4,6 +4,7 @@
 #include <ompl/control/spaces/RealVectorControlSpace.h>
 #include <ompl/control/planners/kpiece/KPIECE1.h>
 #include <ompl/control/planners/rrt/RRT.h>
+#include <ompl/control/planners/pdst/PDST.h>
 #include <ompl/control/SimpleSetup.h>
 #include <ompl/config.h>
 #include <ompl/tools/benchmark/Benchmark.h>
@@ -112,20 +113,27 @@ template<typename F>
      F                        ode_;
  };
 
-// check if the current state is valid
- bool isStateValid(const ob::State *state){
-   return true;
- }
-
 bool isStateValid(const oc::SpaceInformation *si, const ob::State *state)
 {
    //    ob::ScopedState<ob::SE2StateSpace>
    const auto *se2state = state->as<ob::SE2StateSpace::StateType>();
    const auto *pos = se2state->as<ob::RealVectorStateSpace::StateType>(0);
    const auto *rot = se2state->as<ob::SO2StateSpace::StateType>(1);
+   std::cout<<"pos0: "<<pos->operator[](0);
+   std::cout<<"pose1: "<<pos->operator[](1);
+   std::cout<<"rot: "<<pos->operator[](0);
+   // state validations;
    // return a value that is always true but uses the two variables we define, so we avoid compiler warnings
    return si->satisfiesBounds(state) && (const void*)rot != (const void*)pos;
 }
+
+// this class check the feasibility of state propagation
+class myMotionValidator : public ob::MotionValidator
+{
+public:
+    // implement checkMotion()
+};
+
 
 class DemoControlSpace : public oc::RealVectorControlSpace
 {
@@ -158,6 +166,9 @@ public:
         return integrator_.getTimeStep();
     }
 
+    bool steer(){
+
+    }
     EulerIntegrator<KinematicCarModel> integrator_;
 };
 
@@ -216,23 +227,31 @@ void planWithSimpleSetup()
 {
     auto space(std::make_shared<ob::SE2StateSpace>());
     ob::RealVectorBounds bounds(2);
-    bounds.setLow(-1);
+    bounds.setLow(0);
     bounds.setHigh(1);
     space->setBounds(bounds);
     // create a control space
     auto cspace(std::make_shared<DemoControlSpace>(space));
     // set the bounds for the control space
     ob::RealVectorBounds cbounds(2);
-    cbounds.setLow(-0.3);
-    cbounds.setHigh(0.3);
+    cbounds.setLow(0, 0.0);
+    cbounds.setHigh(0, 0.3);
+    cbounds.setLow(1, -1);
+    cbounds.setHigh(1, 1);
     cspace->setBounds(cbounds);
     // define a simple setup class
     oc::SimpleSetup ss(cspace);
     oc::SpaceInformation *si = ss.getSpaceInformation().get();
     ss.setStateValidityChecker(
         [si](const ob::State *state) { return isStateValid(si, state); });
+    // validate the state transition
+    //si->setMotionValidator(std::make_shared<myMotionValidator>(si));
+    //si->setStateValidityCheckingResolution(0.03); // 3%
+    //si->setup();
     auto propagator(std::make_shared<DemoStatePropagator>(si));
     ss.setStatePropagator(propagator);
+    si->setMinMaxControlDuration(1,20);
+    si->setPropagationStepSize(0.03); // decrease this value to get a finer path
     ss.setPlanner(std::make_shared<oc::RRT>(ss.getSpaceInformation()));
     /*
     ompl::control::RRT planner(std::make_shared<oc::SpaceInformation>(si));
@@ -240,14 +259,14 @@ void planWithSimpleSetup()
     ss.setPlanner(obplanner);
     */
     ob::ScopedState<ob::SE2StateSpace> start(space);
-    start->setX(-0.5);
+    start->setX(0.0);
     start->setY(0.0);
     start->setYaw(0.0);
     ob::ScopedState<ob::SE2StateSpace> goal(space);
-    goal->setX(0.0);
-    goal->setY(0.5);
+    goal->setX(0.5);
+    goal->setY(1);
     goal->setYaw(0.0);
-    ss.setStartAndGoalStates(start, goal, 0.05);
+    ss.setStartAndGoalStates(start, goal, 0.01);
     ss.setup();
     propagator->setIntegrationTimeStep(si->getPropagationStepSize());
     ob::PlannerStatus solved = ss.solve(10.0);
@@ -255,6 +274,8 @@ void planWithSimpleSetup()
     if (solved)
     {
         std::cout << "Found solution:" << std::endl;
+        oc::PathControl& path(ss.getSolutionPath());
+        path.interpolate();
         resultProcessor(ss);
         //ss.getSolutionPath().asGeometric().printAsMatrix(std::cout);
     }
