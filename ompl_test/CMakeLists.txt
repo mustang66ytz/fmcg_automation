@@ -139,9 +139,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}_simple_test_node src/ompl_simple_test.cpp)
 add_executable(${PROJECT_NAME}_rigid_planning_control_node src/rigidbodyplanningwithintegrationandcontrol.cpp)
-add_executable(${PROJECT_NAME}_navigate_agv_node src/navigate_agv.cpp)
 add_executable(${PROJECT_NAME}_agv_tf_node src/agv_tf.cpp)
 ## add_executable(${PROJECT_NAME}_kinematics_car_planning_node src/kincarplanning.cpp)
 
@@ -156,15 +154,7 @@ add_executable(${PROJECT_NAME}_agv_tf_node src/agv_tf.cpp)
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}_simple_test_node
-  ${catkin_LIBRARIES}
-  ${OMPL_LIBRARIES}
-)
 target_link_libraries(${PROJECT_NAME}_rigid_planning_control_node
-  ${catkin_LIBRARIES}
-  ${OMPL_LIBRARIES}
-)
-target_link_libraries(${PROJECT_NAME}_navigate_agv_node
   ${catkin_LIBRARIES}
   ${OMPL_LIBRARIES}
 )
