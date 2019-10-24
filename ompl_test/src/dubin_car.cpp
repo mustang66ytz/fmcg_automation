@@ -1,12 +1,14 @@
 #include <ompl/base/goals/GoalState.h>
 #include <ompl/base/spaces/SE2StateSpace.h>
-#include <ompl/control/SpaceInformation.h>
 #include <ompl/base/spaces/SE2StateSpace.h>
+
+#include <ompl/control/SpaceInformation.h>
 #include <ompl/control/ODESolver.h>
 #include <ompl/control/planners/rrt/RRT.h>
 #include <ompl/control/planners/pdst/PDST.h>
 #include <ompl/control/spaces/RealVectorControlSpace.h>
 #include <ompl/control/SimpleSetup.h>
+
 #include <ompl/config.h>
 #include <iostream>
 #include <valarray>
@@ -15,6 +17,8 @@
 #include "ros/ros.h"
 #include <tf/transform_broadcaster.h>
 #include <nav_msgs/Odometry.h>
+#include <geometry_msgs/PolygonStamped.h>
+#include <geometry_msgs/Polygon.h>
 #include "ompl_test/Waypoint.h"
 
 namespace ob = ompl::base;
@@ -22,67 +26,6 @@ namespace oc = ompl::control;
 std::vector<double> path1d;
 std::vector<std::vector<double>> path;
 std::vector<std::vector<double>> control_signal;
-
-// Kinematic car model object definition.  This class does NOT use ODESolver to propagate the system.
-class KinematicCarModel : public oc::StatePropagator
-{
-    public:
-        KinematicCarModel(const oc::SpaceInformationPtr &si) : oc::StatePropagator(si)
-        {
-            space_     = si->getStateSpace();
-            carLength_ = 0.2;
-            timeStep_  = 0.01;
-        }
-
-        void propagate(const ob::State *state, const oc::Control* control, const double duration, ob::State *result) const override
-        {
-            EulerIntegration(state, control, duration, result);
-        }
-
-    protected:
-        // Explicit Euler Method for numerical integration.
-        void EulerIntegration(const ob::State *start, const oc::Control *control, const double duration, ob::State *result) const
-        {
-            double t = timeStep_;
-            std::valarray<double> dstate;
-            space_->copyState(result, start);
-            while (t < duration + std::numeric_limits<double>::epsilon())
-            {
-                ode(result, control, dstate);
-                update(result, timeStep_ * dstate);
-                t += timeStep_;
-            }
-            if (t + std::numeric_limits<double>::epsilon() > duration)
-            {
-                ode(result, control, dstate);
-                update(result, (t - duration) * dstate);
-            }
-        }
-
-        void ode(const ob::State *state, const oc::Control *control, std::valarray<double> &dstate) const
-        {
-            const double *u = control->as<oc::RealVectorControlSpace::ControlType>()->values;
-            const double theta = state->as<ob::SE2StateSpace::StateType>()->getYaw();
-
-            dstate.resize(3);
-            dstate[0] = u[0] * cos(theta);
-            dstate[1] = u[0] * sin(theta);
-            dstate[2] = u[0] * tan(u[1]) / carLength_;
-        }
-
-        void update(ob::State *state, const std::valarray<double> &dstate) const
-        {
-            ob::SE2StateSpace::StateType &s = *state->as<ob::SE2StateSpace::StateType>();
-            s.setX(s.getX() + dstate[0]);
-            s.setY(s.getY() + dstate[1]);
-            s.setYaw(s.getYaw() + dstate[2]);
-            space_->enforceBounds(state);
-        }
-
-        ob::StateSpacePtr        space_;
-        double                   carLength_;
-        double                   timeStep_;
-};
 
 // Definition of the ODE for the kinematic car.
 // This method is analogous to the above KinematicCarModel::ode function.
@@ -94,10 +37,18 @@ void KinematicCarODE (const oc::ODESolver::StateType& q, const oc::Control* cont
 
     // Zero out qdot
     qdot.resize (q.size (), 0);
-
+    /*
     qdot[0] = u[0] * cos(theta);
     qdot[1] = u[0] * sin(theta);
     qdot[2] = u[0] * tan(u[1]) / carLength;
+    */
+    /* moderate kinematics bicycle model*/
+    // define the rear and front lengths of the car using bicycle model
+    double lr, lf = carLength/2.0;
+    double beta = atan((lr/carLength)*tan(u[1]));
+    qdot[0] = u[0]*cos(theta+beta);
+    qdot[1] = u[0]*sin(theta+beta);
+    qdot[2] = u[0]*sin(beta)/lr;
 }
 
 // This is a callback method invoked after numerical integration.
@@ -112,15 +63,19 @@ bool isStateValid(const oc::SpaceInformation *si, const ob::State *state)
 {
     //    ob::ScopedState<ob::SE2StateSpace>
     const auto *se2state = state->as<ob::SE2StateSpace::StateType>();
-
     const auto *pos = se2state->as<ob::RealVectorStateSpace::StateType>(0);
-
     const auto *rot = se2state->as<ob::SO2StateSpace::StateType>(1);
-
-
-
+    double x = state->as<ob::SE2StateSpace::StateType>()->getX();
+    double y = state->as<ob::SE2StateSpace::StateType>()->getY();
+    double yaw = state->as<ob::SE2StateSpace::StateType>()->getYaw();
+    // obstacle avoidance
+    bool no_collision = true;
+    if(x>=0.3 && x<=0.7 && y>=0.3 && y<=0.7){
+      no_collision = false;
+    }
+    std::cout<<"no_collision?"<<no_collision<<std::endl;
     // return a value that is always true but uses the two variables we define, so we avoid compiler warnings
-    return si->satisfiesBounds(state) && (const void*)rot != (const void*)pos;
+    return si->satisfiesBounds(state) && no_collision && (const void*)rot != (const void*)pos;
 }
 
 class DemoControlSpace : public oc::RealVectorControlSpace
@@ -164,24 +119,6 @@ void resultProcessor(oc::SimpleSetup &ss){
      path1d.push_back(y);
      path1d.push_back(yaw);
  }
- //print the solution path
- /*
-std::cout<<"path"<<std::endl;
-for (int i=0; i<path.size(); i++){
-    for(int j=0; j<3; j++){
-        std::cout<<path[i][j]<<" ";
-    }
-    std::cout<<std::endl;
- }
- //print the control signals
-std::cout<<"control"<<std::endl;
-for (int i=0; i<control_signal.size(); i++){
-    for(int j=0; j<3; j++){
-        std::cout<<control_signal[i][j]<<" ";
-    }
-    std::cout<<std::endl;
- }
-*/
 
  for (int i=0; i<3; i++){
   std::cout<<"pos at time 0: "<<path[0][i]<<std::endl;
@@ -220,8 +157,7 @@ void planWithSimpleSetup()
 
     // set state validity checking for this space
     oc::SpaceInformation *si = ss.getSpaceInformation().get();
-    ss.setStateValidityChecker(
-        [si](const ob::State *state) { return isStateValid(si, state); });
+    ss.setStateValidityChecker([si](const ob::State *state) { return isStateValid(si, state); });
 
     // Setting the propagation routine for this space:
     // KinematicCarModel does NOT use ODESolver
@@ -273,6 +209,7 @@ void res_visualizer(){
    ompl_test::Waypoint msg;
    msg.target = path1d;
    ros::Publisher odom_pub = n.advertise<nav_msgs::Odometry>("odom", 50);
+   ros::Publisher obstacle_pub = n.advertise<geometry_msgs::PolygonStamped>("obstacle", 50);
    tf::TransformBroadcaster odom_broadcaster;
    ros::Rate r(5);
    // iterate through the result states
@@ -315,10 +252,40 @@ void res_visualizer(){
      //publish the message
      odom_pub.publish(odom);
      r.sleep();
+
+     // obstacle publisher
+     geometry_msgs::PolygonStamped obstacle;
+     obstacle.header.stamp = ros::Time::now();
+     obstacle.header.frame_id = "World";
+     // set the position
+     geometry_msgs::Point32 pt_a;
+     pt_a.x = 0.3;
+     pt_a.y = 0.3;
+     pt_a.z = 0;
+     geometry_msgs::Point32 pt_b;
+     pt_b.x = 0.3;
+     pt_b.y = 0.7;
+     pt_b.z = 0;
+     geometry_msgs::Point32 pt_c;
+     pt_c.x = 0.7;
+     pt_c.y = 0.7;
+     pt_c.z = 0;
+     geometry_msgs::Point32 pt_d;
+     pt_d.x = 0.7;
+     pt_d.y = 0.3;
+     pt_d.z = 0;
+     obstacle.polygon.points.push_back(pt_a);
+     obstacle.polygon.points.push_back(pt_b);
+     obstacle.polygon.points.push_back(pt_c);
+     obstacle.polygon.points.push_back(pt_d);
+     //publish the message
+     obstacle_pub.publish(obstacle);
+     r.sleep();
    }
    loop_rate.sleep();
  }
 }
+
 int main(int argc, char ** argv)
 {
     std::cout << "OMPL version: " << OMPL_VERSION << std::endl;

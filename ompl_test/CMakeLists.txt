@@ -142,6 +142,7 @@ include_directories(
 add_executable(${PROJECT_NAME}_rigid_planning_control_node src/rigidbodyplanningwithintegrationandcontrol.cpp)
 add_executable(${PROJECT_NAME}_agv_tf_node src/agv_tf.cpp)
 add_executable(${PROJECT_NAME}_dubin_car_node src/dubin_car.cpp)
+add_executable(${PROJECT_NAME}_obstacle_visualizer_node src/obstacle_visualizer.cpp)
 ## add_executable(${PROJECT_NAME}_kinematics_car_planning_node src/kincarplanning.cpp)
 
 ## Rename C++ executable without prefix
@@ -167,7 +168,9 @@ target_link_libraries(${PROJECT_NAME}_dubin_car_node
   ${catkin_LIBRARIES}
   ${OMPL_LIBRARIES}
 )
-
+target_link_libraries(${PROJECT_NAME}_obstacle_visualizer_node
+  ${catkin_LIBRARIES}
+)
 #############
 ## Install ##
 #############
