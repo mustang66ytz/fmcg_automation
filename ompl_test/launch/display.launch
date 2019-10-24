@@ -16,5 +16,6 @@
   <!-- run the path visualization node -->
   <node name="visualizer_node" pkg="ompl_test" type="ompl_visualizer.py" output="screen"/>
   <!-- launch the ompl planning node-->
-  <node name="rigid_planning_control_node" pkg="ompl_test" type="ompl_test_rigid_planning_control_node" output="screen"/>
+  <!--node name="rigid_planning_control_node" pkg="ompl_test" type="ompl_test_rigid_planning_control_node" output="screen"/-->
+  <node name="dubin_car_node" pkg="ompl_test" type="ompl_test_dubin_car_node" output="screen"/>
 </launch>

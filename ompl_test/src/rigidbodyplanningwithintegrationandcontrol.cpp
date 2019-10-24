@@ -41,15 +41,25 @@ class KinematicCarModel
          const double theta = state->as<ob::SE2StateSpace::StateType>()->getYaw();
 
          dstate.resize(3);
-         dstate[0] = u[0] * cos(theta);
-         dstate[1] = u[0] * sin(theta);
+         /* simple kinematics bicycle model
          // inferred from the formula, the model used is kinematics bicycle model.
          // dstste[0] is the change of position in x direction
          // dstate[1] is the change of the position in y direction
          // dstate[2] is the change of the heading angle
          // u[0] is the linear velocity of the car
          // u[1] is the steering angle of the car
-         dstate[2] = u[0] * tan(u[1]) / carLength_;
+         dstate[0] = u[0] * cos(theta);
+         dstate[1] = u[0] * sin(theta);
+         dstate[2] = u[0] * tan(u[1]) / carLength_; */
+
+         /* moderate kinematics bicycle model*/
+         // define the rear and front lengths of the car using bicycle model
+         double lr, lf = carLength_/2.0;
+         double beta = atan((lr/carLength_)*tan(u[1]));
+         dstate[0] = u[0]*cos(theta+beta);
+         dstate[1] = u[0]*sin(theta+beta);
+         dstate[2] = u[0]*sin(beta)/lr;
+
      }
      // this function update the state of the car after the control drive
      void update(ob::State *state, const std::valarray<double> &dstate) const
@@ -107,10 +117,88 @@ template<typename F>
          timeStep_ = timeStep;
      }
 
+     bool steer(const ob::State *from, const ob::State *to, oc::Control *control, double &duration)
+     {
+       double lr, lf = 0.1;
+       double delta_x = to->as<ob::SE2StateSpace::StateType>()->getX() - from->as<ob::SE2StateSpace::StateType>()->getX();
+       double delta_y = to->as<ob::SE2StateSpace::StateType>()->getY() - from->as<ob::SE2StateSpace::StateType>()->getY();
+       double delta_theta = to->as<ob::SE2StateSpace::StateType>()->getYaw() - from->as<ob::SE2StateSpace::StateType>()->getYaw();
+       double a,b,c,x1,x2; // ax^2 +bx +c = 0
+       a = delta_x*delta_x + delta_y*delta_y;
+       b = -2*delta_y*delta_theta*lr;
+       c = delta_theta*delta_theta*lr*lr - delta_x*delta_x;
+       double discriminant = b*b - 4*a*c;
+       std::cout<<"validate steering"<<std::endl;
+       if (discriminant > 0) {
+             x1 = (-b + sqrt(discriminant)) / (2*a);
+             x2 = (-b - sqrt(discriminant)) / (2*a);
+             if (x1>=-1 && x1 <=1){
+               double theta = acos(x1);
+               double beta = atan((lr/(lr+lf))*tan(theta));
+               double v = delta_x/(cos(theta+beta));
+               std::cout<<"process a candidate"<<theta<<std::endl;
+               control->as<oc::RealVectorControlSpace::ControlType>()->values[0] = v;
+               control->as<oc::RealVectorControlSpace::ControlType>()->values[1] = theta;
+               able_to_steer = true;
+               return true;
+             }
+             else if (x2>=-1 && x2<=1){
+               double theta = acos(x2);
+               double beta = atan((lr/(lr+lf))*tan(theta));
+               double v = delta_x/(cos(theta+beta));
+               std::cout<<"process a candidate"<<theta<<std::endl;
+               control->as<oc::RealVectorControlSpace::ControlType>()->values[0] = v;
+               control->as<oc::RealVectorControlSpace::ControlType>()->values[1] = theta;
+               able_to_steer = true;
+               return true;
+             }
+             else{
+               std::cout<<"a candidate failed"<<std::endl;
+               able_to_steer = false;
+               return false;
+             }
+       }
+       else if (discriminant == 0) {
+             x1 = (-b + sqrt(discriminant)) / (2*a);
+             if (x1>=-1 && x1 <=1){
+               double theta = acos(x1);
+               double beta = atan((lr/(lr+lf))*tan(theta));
+               double v = delta_x/(cos(theta+beta));
+               std::cout<<"process a candidate"<<theta<<std::endl;
+               control->as<oc::RealVectorControlSpace::ControlType>()->values[0] = v;
+               control->as<oc::RealVectorControlSpace::ControlType>()->values[1] = theta;
+               able_to_steer = true;
+               return true;
+             }
+             else{
+               std::cout<<"a candidate failed"<<std::endl;
+               able_to_steer = false;
+               return false;
+             }
+       }
+       else {
+           std::cout<<"not able to find a solution"<<std::endl;
+           able_to_steer = false;
+           return false;
+       }
+     }
+
+     bool canSteer() const
+     {
+       std::cout<<"can steer"<<std::endl;
+       if (able_to_steer == true){
+         return true;
+       }
+       else {
+         return false;
+       }
+     }
+
  private:
      const ob::StateSpace *space_;
      double                   timeStep_;
      F                        ode_;
+     bool able_to_steer = false;
  };
 
 bool isStateValid(const oc::SpaceInformation *si, const ob::State *state)
@@ -119,9 +207,6 @@ bool isStateValid(const oc::SpaceInformation *si, const ob::State *state)
    const auto *se2state = state->as<ob::SE2StateSpace::StateType>();
    const auto *pos = se2state->as<ob::RealVectorStateSpace::StateType>(0);
    const auto *rot = se2state->as<ob::SO2StateSpace::StateType>(1);
-   std::cout<<"pos0: "<<pos->operator[](0);
-   std::cout<<"pose1: "<<pos->operator[](1);
-   std::cout<<"rot: "<<pos->operator[](0);
    // state validations;
    // return a value that is always true but uses the two variables we define, so we avoid compiler warnings
    return si->satisfiesBounds(state) && (const void*)rot != (const void*)pos;
@@ -165,10 +250,14 @@ public:
     {
         return integrator_.getTimeStep();
     }
-
-    bool steer(){
-
+    bool steer(const ob::State *from, const ob::State *to, oc::Control *control, double &duration)
+    {
+      return integrator_.steer(from, to, control, duration);
     }
+    bool canSteer() const{
+      return integrator_.canSteer();
+    }
+
     EulerIntegrator<KinematicCarModel> integrator_;
 };
 
@@ -206,21 +295,34 @@ void resultProcessor(oc::SimpleSetup &ss){
  }
  //print the solution path
  /*
+std::cout<<"path"<<std::endl;
 for (int i=0; i<path.size(); i++){
     for(int j=0; j<3; j++){
         std::cout<<path[i][j]<<" ";
     }
     std::cout<<std::endl;
- }*/
+ }
  //print the control signals
- /*
+std::cout<<"control"<<std::endl;
 for (int i=0; i<control_signal.size(); i++){
     for(int j=0; j<3; j++){
         std::cout<<control_signal[i][j]<<" ";
     }
     std::cout<<std::endl;
  }
- */
+*/
+
+ for (int i=0; i<3; i++){
+  std::cout<<"pos at time 0: "<<path[0][i]<<std::endl;
+ }
+ for (int i=0; i<3; i++){
+  std::cout<<"control at time 0: "<<control_signal[0][i]<<std::endl;
+ }
+ for (int i=0; i<3; i++){
+  std::cout<<"pos at time 1: "<<path[1][i]<<std::endl;
+ }
+
+
 }
 
 void planWithSimpleSetup()
@@ -251,7 +353,7 @@ void planWithSimpleSetup()
     auto propagator(std::make_shared<DemoStatePropagator>(si));
     ss.setStatePropagator(propagator);
     si->setMinMaxControlDuration(1,20);
-    si->setPropagationStepSize(0.03); // decrease this value to get a finer path
+    si->setPropagationStepSize(0.1); // decrease this value to get a finer path
     ss.setPlanner(std::make_shared<oc::RRT>(ss.getSpaceInformation()));
     /*
     ompl::control::RRT planner(std::make_shared<oc::SpaceInformation>(si));
@@ -266,10 +368,10 @@ void planWithSimpleSetup()
     goal->setX(0.5);
     goal->setY(1);
     goal->setYaw(0.0);
-    ss.setStartAndGoalStates(start, goal, 0.01);
+    ss.setStartAndGoalStates(start, goal, 0.05);
     ss.setup();
     propagator->setIntegrationTimeStep(si->getPropagationStepSize());
-    ob::PlannerStatus solved = ss.solve(10.0);
+    ob::PlannerStatus solved = ss.solve(100.0);
 
     if (solved)
     {
