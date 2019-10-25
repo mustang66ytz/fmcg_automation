@@ -8,8 +8,9 @@
   <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg model)" />
   <param name="use_gui" value="$(arg gui)"/>
 
-  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+  <!--node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" /-->
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
+  <node name="state_publisher" pkg="ompl_test" type="ompl_test_mobile_manipulator_node"/>
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
   <!-- run the tf publisher -->
   <node name="agv_tf" pkg="ompl_test" type="ompl_test_agv_tf_node" output="screen" />
@@ -17,5 +18,6 @@
   <node name="visualizer_node" pkg="ompl_test" type="ompl_visualizer.py" output="screen"/>
   <!-- launch the ompl planning node-->
   <!--node name="rigid_planning_control_node" pkg="ompl_test" type="ompl_test_rigid_planning_control_node" output="screen"/-->
-  <node name="dubin_car_node" pkg="ompl_test" type="ompl_test_dubin_car_node" output="screen"/>
+  <!--node name="dubin_car_node" pkg="ompl_test" type="ompl_test_dubin_car_node" output="screen"/-->
+  <node name="mobile_manipulator_node" pkg="ompl_test" type="ompl_test_mobile_manipulator_node" output="screen"/>
 </launch>

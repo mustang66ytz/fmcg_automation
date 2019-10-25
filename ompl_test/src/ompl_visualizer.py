@@ -89,8 +89,8 @@ class PathVisualizer(object):
         # reformat the trajectory points
         for count, pt in enumerate(self.traj_pts):
             state = Point()
-            state.x = pt[-3]
-            state.y = pt[-2]
+            state.x = pt[-4]
+            state.y = pt[-3]
             traj_states.append(state)
             if float(count) in self.fail_pts:
                 pt_marker_fail.colors.append(pt_marker_fail.color)
@@ -113,13 +113,13 @@ class PathVisualizer(object):
         #print "sending marker"
 
     def callback(self, data):
-        # conver the 1D list to 2D
+        # convert the 1D list to 2D
         if len(self.traj_pts) == 0:
             temp = []
             for count, item in enumerate(data.target):
-                if (count + 1) % 3 == 0 and not count == 0:
+                if (count + 1) % 4 == 0 and not count == 0:
                     temp.append(item)
-                    if not (count+1)/3 in self.fail_pts:
+                    if not (count+1)/4 in self.fail_pts:
                         self.traj_pts.append(temp)
                     temp = []
                 else:

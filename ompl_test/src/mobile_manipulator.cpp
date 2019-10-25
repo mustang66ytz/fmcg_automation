@@ -1,11 +1,13 @@
 #include <ompl/base/goals/GoalState.h>
 #include <ompl/base/spaces/SE2StateSpace.h>
 #include <ompl/base/spaces/SE2StateSpace.h>
+#include <ompl/base/spaces/RealVectorStateSpace.h>
 
 #include <ompl/control/SpaceInformation.h>
 #include <ompl/control/ODESolver.h>
 #include <ompl/control/planners/rrt/RRT.h>
 #include <ompl/control/planners/pdst/PDST.h>
+#include <ompl/control/planners/kpiece/KPIECE1.h>
 #include <ompl/control/spaces/RealVectorControlSpace.h>
 #include <ompl/control/SimpleSetup.h>
 
@@ -16,6 +18,7 @@
 #include <vector>
 #include "ros/ros.h"
 #include <tf/transform_broadcaster.h>
+#include <sensor_msgs/JointState.h>
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/PolygonStamped.h>
 #include <geometry_msgs/Polygon.h>
@@ -29,11 +32,28 @@ std::vector<std::vector<double>> control_signal;
 
 // Definition of the ODE for the kinematic car.
 // This method is analogous to the above KinematicCarModel::ode function.
-void KinematicCarODE (const oc::ODESolver::StateType& q, const oc::Control* control, oc::ODESolver::StateType& qdot)
+void MMODE (const oc::ODESolver::StateType& q, const oc::Control* control, oc::ODESolver::StateType& qdot)
 {
+    /*
+     * q[0]: car position x
+     * q[1]: car position y
+     * q[2]: car heading angle
+     * q[3]: lowest joint angle for arm
+     *
+     * u[0]: car speed
+     * u[1]: car steering angle
+     * u[2]: lowest joint speed for arm
+     *
+     * qdot[0]: change in car position x
+     * qdot[1]: change in car position y
+     * qdot[2]: change in car heading angle
+     * qdot[3]: change in joint1 angle
+     * */
     const double *u = control->as<oc::RealVectorControlSpace::ControlType>()->values;
     const double theta = q[2];
+    const double joint1 = q[3];
     double carLength = 0.2;
+    double link1Length = 0.2;
 
     // Zero out qdot
     qdot.resize (q.size (), 0);
@@ -49,40 +69,51 @@ void KinematicCarODE (const oc::ODESolver::StateType& q, const oc::Control* cont
     qdot[0] = u[0]*cos(theta+beta);
     qdot[1] = u[0]*sin(theta+beta);
     qdot[2] = u[0]*sin(beta)/lr;
+    qdot[3] = u[2];
 }
 
 // This is a callback method invoked after numerical integration.
-void KinematicCarPostIntegration (const ob::State* /*state*/, const oc::Control* /*control*/, const double /*duration*/, ob::State *result)
+void MMPostIntegration (const ob::State* /*state*/, const oc::Control* /*control*/, const double /*duration*/, ob::State *result)
 {
     // Normalize orientation between 0 and 2*pi
     //ob::SO2StateSpace SO2;
     //SO2.enforceBounds(result->as<ob::SE2StateSpace::StateType>()->as<ob::SO2StateSpace::StateType>(1));
+    ob::RealVectorStateSpace agv_chain;
+    agv_chain.enforceBounds(result->as<ob::RealVectorStateSpace::StateType>());
 }
 
 bool isStateValid(const oc::SpaceInformation *si, const ob::State *state)
 {
     //    ob::ScopedState<ob::SE2StateSpace>
+    /*
     const auto *se2state = state->as<ob::SE2StateSpace::StateType>();
     const auto *pos = se2state->as<ob::RealVectorStateSpace::StateType>(0);
     const auto *rot = se2state->as<ob::SO2StateSpace::StateType>(1);
     double x = state->as<ob::SE2StateSpace::StateType>()->getX();
     double y = state->as<ob::SE2StateSpace::StateType>()->getY();
     double yaw = state->as<ob::SE2StateSpace::StateType>()->getYaw();
+    */
+    // extract the values
+    double x = state->as<ob::RealVectorStateSpace::StateType>()->values[0];
+    double y = state->as<ob::RealVectorStateSpace::StateType>()->values[1];
+    double yaw = state->as<ob::RealVectorStateSpace::StateType>()->values[2];
+    double joint1_angle = state->as<ob::RealVectorStateSpace::StateType>()->values[3];
+
     // obstacle avoidance
     bool no_collision = true;
     if(x>=0.3 && x<=0.7 && y>=0.3 && y<=0.7){
       no_collision = false;
     }
-    std::cout<<"no_collision?"<<no_collision<<std::endl;
+    //std::cout<<"no_collision?"<<no_collision<<std::endl;
     // return a value that is always true but uses the two variables we define, so we avoid compiler warnings
-    return si->satisfiesBounds(state) && no_collision && (const void*)rot != (const void*)pos;
+    return si->satisfiesBounds(state) && no_collision;
 }
 
 class DemoControlSpace : public oc::RealVectorControlSpace
 {
 public:
 
-    DemoControlSpace(const ob::StateSpacePtr &stateSpace) : oc::RealVectorControlSpace(stateSpace, 2)
+    DemoControlSpace(const ob::StateSpacePtr &stateSpace) : oc::RealVectorControlSpace(stateSpace, 3)
     {
     }
 };
@@ -96,17 +127,21 @@ void resultProcessor(oc::SimpleSetup &ss){
  // test the result construction
  for(int i=0; i!=states.size(); i++){
      std::vector<double> row;
-     double x = states[i]->as<ob::SE2StateSpace::StateType>()->getX();
-     double y = states[i]->as<ob::SE2StateSpace::StateType>()->getY();
-     double yaw = states[i]->as<ob::SE2StateSpace::StateType>()->getYaw();
+     double x = states[i]->as<ob::RealVectorStateSpace::StateType>()->values[0];
+     double y = states[i]->as<ob::RealVectorStateSpace::StateType>()->values[1];
+     double yaw = states[i]->as<ob::RealVectorStateSpace::StateType>()->values[2];
+     double joint1_angle = states[i]->as<ob::RealVectorStateSpace::StateType>()->values[3];
+
      if(i<states.size()-1){
        std::vector<double> control_row;
        double x_control = controls[i]->as<oc::RealVectorControlSpace::ControlType>()->values[0];
        double y_control = controls[i]->as<oc::RealVectorControlSpace::ControlType>()->values[1];
        double yaw_control = controls[i]->as<oc::RealVectorControlSpace::ControlType>()->values[2];
+       double joint1_control = controls[i]->as<oc::RealVectorControlSpace::ControlType>()->values[3];
        control_row.push_back(x_control);
        control_row.push_back(y_control);
        control_row.push_back(yaw_control);
+       control_row.push_back(joint1_control);
        control_signal.push_back(control_row);
        //std::cout<<"control x:"<<x_control<<std::endl;
      }
@@ -114,30 +149,48 @@ void resultProcessor(oc::SimpleSetup &ss){
      row.push_back(x);
      row.push_back(y);
      row.push_back(yaw);
+     row.push_back(joint1_angle);
      path.push_back(row);
      path1d.push_back(x);
      path1d.push_back(y);
      path1d.push_back(yaw);
+     path1d.push_back(joint1_angle);
+
  }
 
- for (int i=0; i<3; i++){
+ for (int i=0; i<4; i++){
   std::cout<<"pos at time 0: "<<path[0][i]<<std::endl;
  }
  for (int i=0; i<3; i++){
   std::cout<<"control at time 0: "<<control_signal[0][i]<<std::endl;
  }
- for (int i=0; i<3; i++){
+ for (int i=0; i<4; i++){
   std::cout<<"pos at time 1: "<<path[1][i]<<std::endl;
  }
+
+ // print the arm link pose
+ for(int i=0; i<path.size(); i++){
+   std::cout<<"y is: "<<path[i][1]<<std::endl;
+ }
+ // print the arm link pose
+// for(int i=0; i<path.size(); i++){
+//   std::cout<<"joint angle is: "<<path[i][3]<<std::endl;
+// }
 }
 
 void planWithSimpleSetup()
 {
-    auto space(std::make_shared<ob::SE2StateSpace>());
+    auto space(std::make_shared<ob::RealVectorStateSpace>(4));
 
-    ob::RealVectorBounds bounds(2);
-    bounds.setLow(0);
-    bounds.setHigh(1);
+    ob::RealVectorBounds bounds(4);
+    bounds.setLow(0, 0);
+    bounds.setHigh(0, 1);
+    bounds.setLow(1, 0);
+    bounds.setHigh(1, 1);
+    bounds.setLow(2, -1);
+    bounds.setHigh(2, 1);
+    bounds.setLow(3, -2);
+    bounds.setHigh(3, 2);
 
     space->setBounds(bounds);
 
@@ -145,11 +198,13 @@ void planWithSimpleSetup()
     auto cspace(std::make_shared<DemoControlSpace>(space));
 
     // set the bounds for the control space
-    ob::RealVectorBounds cbounds(2);
+    ob::RealVectorBounds cbounds(3);
     cbounds.setLow(0, 0.0);
-    cbounds.setHigh(0, 0.3);
-    cbounds.setLow(1, -1);
-    cbounds.setHigh(1, 1);
+    cbounds.setHigh(0, 0.5);
+    cbounds.setLow(1, -1.5);
+    cbounds.setHigh(1, 1.5);
+    cbounds.setLow(2, -2);
+    cbounds.setHigh(2, 2);
     cspace->setBounds(cbounds);
 
     // define a simple setup class
@@ -163,29 +218,31 @@ void planWithSimpleSetup()
     // KinematicCarModel does NOT use ODESolver
     //ss.setStatePropagator(std::make_shared<KinematicCarModel>(ss.getSpaceInformation()));
 
-    // Use the ODESolver to propagate the system.  Call KinematicCarPostIntegration
+    // Use the ODESolver to propagate the system.  Call MMPostIntegration
     // when integration has finished to normalize the orientation values.
-    auto odeSolver(std::make_shared<oc::ODEBasicSolver<>>(ss.getSpaceInformation(), &KinematicCarODE));
-    ss.setStatePropagator(oc::ODESolver::getStatePropagator(odeSolver, &KinematicCarPostIntegration));
+    auto odeSolver(std::make_shared<oc::ODEBasicSolver<>>(ss.getSpaceInformation(), &MMODE));
+    ss.setStatePropagator(oc::ODESolver::getStatePropagator(odeSolver, &MMPostIntegration));
     si->setMinMaxControlDuration(1,20);
-    si->setPropagationStepSize(0.1); // decrease this value to get a finer path
+    si->setPropagationStepSize(0.2); // decrease this value to get a finer path
     ss.setPlanner(std::make_shared<oc::RRT>(ss.getSpaceInformation()));
 
-    ob::ScopedState<ob::SE2StateSpace> start(space);
-    start->setX(0.0);
-    start->setY(0.0);
-    start->setYaw(0.0);
+    ob::ScopedState<ob::RealVectorStateSpace> start(space);
+    start[0] = 0.0;
+    start[1] = 0.0;
+    start[2] = 0.0;
+    start[3] = 0.0;
 
-    ob::ScopedState<ob::SE2StateSpace> goal(space);
-    goal->setX(0.5);
-    goal->setY(1);
-    goal->setYaw(0.0);
+    ob::ScopedState<ob::RealVectorStateSpace> goal(space);
+    goal[0] = 1;
+    goal[1] = 1;
+    goal[2] = 0;
+    goal[3] = 0.5;
 
-    ss.setStartAndGoalStates(start, goal, 0.1);
+    ss.setStartAndGoalStates(start, goal, 0.05);
 
     ss.setup();
 
-    ob::PlannerStatus solved = ss.solve(10.0);
+    ob::PlannerStatus solved = ss.solve(20.0);
 
     if (solved)
     {
@@ -208,9 +265,13 @@ void res_visualizer(){
  while(ros::ok()){
    ompl_test::Waypoint msg;
    msg.target = path1d;
-   ros::Publisher odom_pub = n.advertise<nav_msgs::Odometry>("odom", 50);
-   ros::Publisher obstacle_pub = n.advertise<geometry_msgs::PolygonStamped>("obstacle", 50);
+   // publishers instantiation
+   ros::Publisher odom_pub = n.advertise<nav_msgs::Odometry>("odom", 50); // odometry publisher
+   ros::Publisher obstacle_pub = n.advertise<geometry_msgs::PolygonStamped>("obstacle", 50); // obstacle position publisher
+   ros::Publisher arm_pub = n.advertise<sensor_msgs::JointState>("joint_states", 1); // robotics arm joint states
+   // odometry broadcaster instantiation
    tf::TransformBroadcaster odom_broadcaster;
+
    ros::Rate r(5);
    // iterate through the result states
    std::cout<<"publishing the trajectory states to odom"<<std::endl;
@@ -220,9 +281,10 @@ void res_visualizer(){
      double x = path[i][0]; // define the x position
      double y = path[i][1]; // define the y position
      double yaw = path[i][2]; //define the yaw
+     double arm_angle1 = path[i][3]; // define the joint angle of the lowest arm link
+
      //since all odometry is 6DOF we'll need a quaternion created from yaw
      geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(yaw);
-
      //first, we'll publish the transform over tf
      geometry_msgs::TransformStamped odom_trans;
      odom_trans.header.stamp = current_time;
@@ -252,7 +314,17 @@ void res_visualizer(){
      //publish the message
      odom_pub.publish(odom);
      r.sleep();
-
+     // joint state publisher
+     sensor_msgs::JointState joint_state;
+     //update joint_state
+     joint_state.header.stamp = ros::Time::now();
+     joint_state.name.resize(1);
+     joint_state.position.resize(1);
+     joint_state.name[0] ="base_arm";
+     joint_state.position[0] = arm_angle1;
+     // publish the message
+     arm_pub.publish(joint_state);
+     r.sleep();
      // obstacle publisher
      geometry_msgs::PolygonStamped obstacle;
      obstacle.header.stamp = ros::Time::now();
@@ -281,6 +353,7 @@ void res_visualizer(){
      //publish the message
      obstacle_pub.publish(obstacle);
      r.sleep();
+
    }
    loop_rate.sleep();
  }
