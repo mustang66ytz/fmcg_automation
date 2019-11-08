@@ -32,13 +32,16 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
- /* Author: Elizabeth Fudge */
 
  #include <ompl/base/goals/GoalState.h>
  #include <ompl/base/spaces/SE2StateSpace.h>
  #include <ompl/base/spaces/DiscreteStateSpace.h>
  #include <ompl/control/spaces/RealVectorControlSpace.h>
  #include <ompl/control/SimpleSetup.h>
+#include <ompl/control/planners/rrt/RRT.h>
+#include <ompl/control/planners/est/EST.h>
+#include <ompl/control/planners/pdst/PDST.h>
+#include <ompl/control/planners/kpiece/KPIECE1.h>
  #include <ompl/config.h>
  #include <iostream>
  #include <limits>
@@ -57,16 +60,20 @@
 
      ob::CompoundStateSpace::StateType& s = *result->as<ob::CompoundStateSpace::StateType>();
      ob::SE2StateSpace::StateType& se2 = *s.as<ob::SE2StateSpace::StateType>(0);
-     ob::RealVectorStateSpace::StateType& velocity = *s.as<ob::RealVectorStateSpace::StateType>(1);
+     ob::RealVectorStateSpace::StateType& angles = *s.as<ob::RealVectorStateSpace::StateType>(1);
 
      si->getStateSpace()->copyState(result, state);
      for(int i=0; i<nsteps; i++)
      {
-         velocity.values[0] = velocity.values[0] + dt*u[1];
          // propagate the joint angle
-         velocity.values[1] = velocity.values[1] + dt*u[2];
-         se2.setX(se2.getX() + dt * velocity.values[0] * cos(se2.getYaw()));
-         se2.setY(se2.getY() + dt * velocity.values[0] * sin(se2.getYaw()));
+         angles.values[0] = angles.values[0] + dt*u[2];
+         angles.values[1] = angles.values[1] + dt*u[3];
+         angles.values[2] = angles.values[2] + dt*u[4];
+         angles.values[3] = angles.values[3] + dt*u[5];
+         angles.values[4] = angles.values[4] + dt*u[6];
+         angles.values[5] = angles.values[5] + dt*u[7];
+         se2.setX(se2.getX() + dt * u[1] * cos(se2.getYaw()));
+         se2.setY(se2.getY() + dt * u[1] * sin(se2.getYaw()));
          se2.setYaw(se2.getYaw() + dt * u[0]);
          if (!si->satisfiesBounds(result))
              return;
@@ -86,23 +93,24 @@
  {
      // plan for hybrid car in SE(2) with discrete gears
      auto SE2(std::make_shared<ob::SE2StateSpace>());
-     auto velocity(std::make_shared<ob::RealVectorStateSpace>(2));
-     ob::StateSpacePtr stateSpace = SE2 + velocity;
+     auto Joints(std::make_shared<ob::RealVectorStateSpace>(6));
+     ob::StateSpacePtr stateSpace = SE2 + Joints;
 
      // set the bounds for the R^2 part of SE(2)
      ob::RealVectorBounds bounds(2);
-     bounds.setLow(-100);
-     bounds.setHigh(100);
+     bounds.setLow(0, -100);
+     bounds.setHigh(0, 100);
+     bounds.setLow(1, -100);
+     bounds.setHigh(1, 100);
+     //bounds.setLow(2, -boost::math::constants::pi<double>());
+     //bounds.setHigh(2, boost::math::constants::pi<double>());
      SE2->setBounds(bounds);
 
-     // set the bounds for the velocity
-     ob::RealVectorBounds velocityBound(2);
-     velocityBound.setLow(0, 0);
-     velocityBound.setHigh(0, 60);
-     // set the bounds for the joint angle
-     velocityBound.setLow(1, 0);
-     velocityBound.setHigh(1, 60);
-     velocity->setBounds(velocityBound);
+     // set the bounds for all the joints
+     ob::RealVectorBounds angleBound(6);
+     angleBound.setLow(-60);
+     angleBound.setHigh(60);
+     Joints->setBounds(angleBound);
 
      // create start and goal states
      ob::ScopedState<> start(stateSpace);
@@ -113,31 +121,49 @@
      // shift to first gear.
      start[0] = start[1] = -90.; // position
      start[2] = boost::math::constants::pi<double>()/2; // orientation
-     start[3] = 40.; // velocity
+     start[3] = 40.; // joint angle
      start[4] = 0.; // joint angle
+     start[5] = 0.; // joint angle
+     start[6] = 0.; // joint angle
+     start[7] = 0.; // joint angle
+     start[8] = 0.; // joint angle
      goal[0] = goal[1] = 90.; // position
      goal[2] = 0.; // orientation
-     goal[3] = 40.; // velocity
+     goal[3] = 0.; // joint angle
      goal[4] = 50.; // joint angle
+     goal[5] = 40.; // joint angle
+     goal[6] = 20.; // joint angle
+     goal[7] = 50.; // joint angle
+     goal[8] = 30.; // joint angle
 
-     oc::ControlSpacePtr cmanifold(std::make_shared<oc::RealVectorControlSpace>(stateSpace, 3));
+     oc::ControlSpacePtr cmanifold(std::make_shared<oc::RealVectorControlSpace>(stateSpace, 8));
 
      // set the bounds for the control manifold
-     ob::RealVectorBounds cbounds(3);
+     ob::RealVectorBounds cbounds(8);
      // bounds for steering input
      cbounds.setLow(0, -1.);
      cbounds.setHigh(0, 1.);
-     // bounds for brake/gas input
-     cbounds.setLow(1, -20.);
+     // bounds for speed input
+     cbounds.setLow(1, 0.);
      cbounds.setHigh(1, 20.);
      // bounds for joint angular speed
-     cbounds.setLow(2, -20);
-     cbounds.setHigh(2, 20);
+     cbounds.setLow(2, -20.);
+     cbounds.setHigh(2, 20.);
+     cbounds.setLow(3, -20.);
+     cbounds.setHigh(3, 20.);
+     cbounds.setLow(4, -20.);
+     cbounds.setHigh(4, 20.);
+     cbounds.setLow(5, -20.);
+     cbounds.setHigh(5, 20.);
+     cbounds.setLow(6, -20.);
+     cbounds.setHigh(6, 20.);
+     cbounds.setLow(7, -20.);
+     cbounds.setHigh(7, 20.);
      cmanifold->as<oc::RealVectorControlSpace>()->setBounds(cbounds);
 
      oc::SimpleSetup setup(cmanifold);
      const oc::SpaceInformation *si = setup.getSpaceInformation().get();
-     setup.setStartAndGoalStates(start, goal, 5.);
+     setup.setStartAndGoalStates(start, goal, 10.);
      setup.setStateValidityChecker([si](const ob::State *state)
          {
              return isStateValid(si, state);
@@ -148,7 +174,7 @@
              propagate(si, state, control, duration, result);
          });
      setup.getSpaceInformation()->setPropagationStepSize(.1);
-     setup.getSpaceInformation()->setMinMaxControlDuration(2, 3);
+     setup.getSpaceInformation()->setMinMaxControlDuration(1, 10);
 
      // try to solve the problem
      if (setup.solve(30))
@@ -158,24 +184,24 @@
          oc::PathControl& path(setup.getSolutionPath());
 
          // print out full state on solution path
-         // (format: x, y, theta, v, u0, u1, dt)
+         // (format: x, y, theta, v, u0, u1, dt)<< angles->values[1] << ' '
          for(unsigned int i=0; i<path.getStateCount(); ++i)
          {
              const ob::State* state = path.getState(i);
              const auto *se2 =
                  state->as<ob::CompoundState>()->as<ob::SE2StateSpace::StateType>(0);
-             const auto *velocity =
+             const auto *angles =
                  state->as<ob::CompoundState>()->as<ob::RealVectorStateSpace::StateType>(1);
-             std::cout << se2->getX() << ' ' << se2->getY() << ' ' << se2->getYaw() << ' ' << velocity->values[0] << ' ' << velocity->values[1]<< ' ';
+             std::cout << se2->getX() << ' ' << se2->getY() << ' ' << se2->getYaw() << ' ' << angles->values[0] << ' ' << angles->values[1] << ' ' << angles->values[2] << ' ' << angles->values[3] << ' ' << angles->values[4] << ' ' << angles->values[5] << ' ';
              if (i==0)
                  // null controls applied for zero seconds to get to start state
-                 std::cout << "0 0 0 0";
+                 std::cout << "0 0 0 0 0 0 0 0 0";
              else
              {
                  // print controls and control duration needed to get from state i-1 to state i
                  const double* u =
                      path.getControl(i-1)->as<oc::RealVectorControlSpace::ControlType>()->values;
-                 std::cout << u[0] << ' ' << u[1] << ' ' << u[2] << ' ' << path.getControlDuration(i-1);
+                 std::cout << u[0] << ' ' << u[1] << ' ' << u[2] << ' ' << u[3] << ' ' << u[4] << ' ' << u[5] << ' ' << u[6] << ' ' << u[7] << ' ' << path.getControlDuration(i-1);
              }
              std::cout << std::endl;
          }
