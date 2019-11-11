@@ -148,7 +148,7 @@ add_executable(${PROJECT_NAME}_dubin_car_node src/dubin_car.cpp)
 add_executable(${PROJECT_NAME}_mobile_manipulator_node src/mobile_manipulator.cpp)
 add_executable(${PROJECT_NAME}_obstacle_visualizer_node src/obstacle_visualizer.cpp)
 add_executable(${PROJECT_NAME}_hybrid_node src/hybrid.cpp)
-## add_executable(${PROJECT_NAME}_kinematics_car_planning_node src/kincarplanning.cpp)
+add_executable(${PROJECT_NAME}_joint_state_visualizer_node src/visualization/joint_state_visualizer.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -183,6 +183,9 @@ target_link_libraries(${PROJECT_NAME}_obstacle_visualizer_node
 target_link_libraries(${PROJECT_NAME}_hybrid_node
   ${catkin_LIBRARIES}
   ${OMPL_LIBRARIES}
+)
+target_link_libraries(${PROJECT_NAME}_joint_state_visualizer_node
+  ${catkin_LIBRARIES}
 )
 #############
 ## Install ##

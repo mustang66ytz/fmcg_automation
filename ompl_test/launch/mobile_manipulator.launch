@@ -1,13 +1,14 @@
 <?xml version="1.0" ?>
 <launch>
   <arg name="model" />
-  <arg name="gui" default="true" />
+  <arg name="gui" default="false" />
   <arg name="rvizconfig" default="$(find ompl_test)/rviz/ompl.rviz" />
   
   <param name="robot_description" textfile="$(find ompl_test)/urdf/mobile_manipulator.urdf" />
   <param name="use_gui" value="$(arg gui)"/>
 
-  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+  <!--node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" /-->
+  <node name="joint_state_visualizer" pkg="ompl_test" type="ompl_test_joint_state_visualizer_node"/>
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
 
