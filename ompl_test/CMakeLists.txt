@@ -11,11 +11,13 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   roscpp
   rospy
+  urdf
   rviz
   std_msgs
   ompl
   visualization_msgs
   tf
+  tf2
   nav_msgs
   sensor_msgs
 )
