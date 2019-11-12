@@ -12,4 +12,7 @@
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
 
+  <!-- environment visualization -->
+  <node name="obstacle1" pkg="ompl_test" type="ompl_test_env_visualizer_node_1"/>
+  <node name="obstacle2" pkg="ompl_test" type="ompl_test_env_visualizer_node_2"/>
 </launch>

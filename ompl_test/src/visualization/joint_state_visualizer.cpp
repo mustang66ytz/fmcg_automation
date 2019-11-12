@@ -45,8 +45,8 @@ int main(int argc, char **argv){
         // update transform
         // (moving in a circle with radius=2)
         odom_trans.header.stamp = ros::Time::now();
-        odom_trans.transform.translation.x = cos(angle)*2;
-        odom_trans.transform.translation.y = sin(angle)*2;
+        odom_trans.transform.translation.x = -90+cos(angle)*2;
+        odom_trans.transform.translation.y = -90+sin(angle)*2;
         odom_trans.transform.translation.z = .7;
         odom_trans.transform.rotation = tf::createQuaternionMsgFromYaw(angle+M_PI/2);
         
