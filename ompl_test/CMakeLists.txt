@@ -20,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2
   nav_msgs
   sensor_msgs
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -62,11 +63,11 @@ add_message_files(
 )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
+add_service_files(
+  FILES
+  ResultVisualizer.srv
 #   Service2.srv
-# )
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -113,7 +114,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES ompl_test
-#  CATKIN_DEPENDS geometry_msgs roscpp rospy rviz std_msgs
+  CATKIN_DEPENDS message_runtime geometry_msgs roscpp rospy rviz std_msgs
 #  DEPENDS system_lib
 )
 
@@ -130,10 +131,11 @@ include_directories(
  )
 
 ## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/ompl_test.cpp
-# )
-
+add_library(
+  result_visualizer
+  include/ompl_test/joint_state_visualizer.h
+  src/visualization/joint_state_visualizer.cpp
+)
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -148,7 +150,7 @@ add_executable(${PROJECT_NAME}_dubin_car_node src/dubin_car.cpp)
 add_executable(${PROJECT_NAME}_mobile_manipulator_node src/mobile_manipulator.cpp)
 add_executable(${PROJECT_NAME}_obstacle_visualizer_node src/obstacle_visualizer.cpp)
 add_executable(${PROJECT_NAME}_hybrid_node src/hybrid.cpp)
-add_executable(${PROJECT_NAME}_joint_state_visualizer_node src/visualization/joint_state_visualizer.cpp)
+add_executable(${PROJECT_NAME}_visualizer_server_node src/visualization/visualizer_server.cpp)
 add_executable(${PROJECT_NAME}_env_visualizer_node_1 src/visualization/env_visualizer.cpp)
 add_executable(${PROJECT_NAME}_env_visualizer_node_2 src/visualization/env_visualizer1.cpp)
 
@@ -183,10 +185,12 @@ target_link_libraries(${PROJECT_NAME}_obstacle_visualizer_node
   ${catkin_LIBRARIES}
 )
 target_link_libraries(${PROJECT_NAME}_hybrid_node
+  result_visualizer
   ${catkin_LIBRARIES}
   ${OMPL_LIBRARIES}
 )
-target_link_libraries(${PROJECT_NAME}_joint_state_visualizer_node
+target_link_libraries(${PROJECT_NAME}_visualizer_server_node
+  result_visualizer
   ${catkin_LIBRARIES}
 )
 target_link_libraries(${PROJECT_NAME}_env_visualizer_node_1

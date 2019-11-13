@@ -42,6 +42,8 @@
 #include <ompl/control/planners/est/EST.h>
 #include <ompl/control/planners/pdst/PDST.h>
 #include <ompl/control/planners/kpiece/KPIECE1.h>
+#include "ompl_test/joint_state_visualizer.h"
+#include <ompl_test/ResultVisualizer.h>
  #include <ompl/config.h>
  #include <iostream>
  #include <limits>
@@ -89,7 +91,7 @@
  }
 
 
- int main(int /*argc*/, char** /*argv*/)
+ int main(int argc, char** argv)
  {
      // plan for hybrid car in SE(2) with discrete gears
      auto SE2(std::make_shared<ob::SE2StateSpace>());
@@ -98,10 +100,10 @@
 
      // set the bounds for the R^2 part of SE(2)
      ob::RealVectorBounds bounds(2);
-     bounds.setLow(0, -100);
+     bounds.setLow(0, -90);
      bounds.setHigh(0, 100);
      bounds.setLow(1, -100);
-     bounds.setHigh(1, 100);
+     bounds.setHigh(1, 90);
      //bounds.setLow(2, -boost::math::constants::pi<double>());
      //bounds.setHigh(2, boost::math::constants::pi<double>());
      SE2->setBounds(bounds);
@@ -177,11 +179,13 @@
      setup.getSpaceInformation()->setMinMaxControlDuration(1, 10);
 
      // try to solve the problem
-     if (setup.solve(30))
+     std::vector<double> path_1d;
+     if (setup.solve(100))
      {
          // print the (approximate) solution path: print states along the path
          // and controls required to get from one state to the next
          oc::PathControl& path(setup.getSolutionPath());
+         path.interpolate();
 
          // print out full state on solution path
          // (format: x, y, theta, v, u0, u1, dt)<< angles->values[1] << ' '
@@ -193,6 +197,17 @@
              const auto *angles =
                  state->as<ob::CompoundState>()->as<ob::RealVectorStateSpace::StateType>(1);
              std::cout << se2->getX() << ' ' << se2->getY() << ' ' << se2->getYaw() << ' ' << angles->values[0] << ' ' << angles->values[1] << ' ' << angles->values[2] << ' ' << angles->values[3] << ' ' << angles->values[4] << ' ' << angles->values[5] << ' ';
+             // store the joints to result
+             path_1d.push_back(se2->getX());
+	     path_1d.push_back(se2->getY());
+	     path_1d.push_back(se2->getYaw());
+             path_1d.push_back(angles->values[0]);
+	     path_1d.push_back(angles->values[1]);
+ 	     path_1d.push_back(angles->values[2]);
+	     path_1d.push_back(angles->values[3]);
+	     path_1d.push_back(angles->values[4]);
+	     path_1d.push_back(angles->values[5]);
+
              if (i==0)
                  // null controls applied for zero seconds to get to start state
                  std::cout << "0 0 0 0 0 0 0 0 0";
@@ -210,6 +225,24 @@
              std::cout << "Solution is approximate. Distance to actual goal is " <<
                  setup.getProblemDefinition()->getSolutionDifference() << std::endl;
          }
+     }
+     
+     // the following is responsible in sending a service request to the visualization server
+     ros::init(argc, argv, "joint_state_visualizer_node_client");
+
+     ros::NodeHandle n;
+     ros::ServiceClient client = n.serviceClient<ompl_test::ResultVisualizer>("result_visualizer");
+     ompl_test::ResultVisualizer srv;
+     srv.request.traj_1d = path_1d;
+  
+     if (client.call(srv))
+     {
+       ROS_INFO("Path sent to visualizer");
+     }
+     else
+     {
+       ROS_ERROR("Failed to call service result_visualizer");
+       return 1;
      }
 
      return 0;
