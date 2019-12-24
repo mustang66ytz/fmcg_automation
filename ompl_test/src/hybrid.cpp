@@ -87,7 +87,7 @@
  bool isStateValid(const oc::SpaceInformation *si, const ob::State *state)
  {
    const auto *se2 = state->as<ob::CompoundState>()->as<ob::SE2StateSpace::StateType>(0);
-   return si->satisfiesBounds(state) && (se2->getX() < -80. || se2->getY() > 80.);
+   return si->satisfiesBounds(state) && (se2->getX() < -8. || se2->getY() > 8.);
  }
 
 
@@ -100,10 +100,10 @@
 
      // set the bounds for the R^2 part of SE(2)
      ob::RealVectorBounds bounds(2);
-     bounds.setLow(0, -90);
-     bounds.setHigh(0, 100);
-     bounds.setLow(1, -100);
-     bounds.setHigh(1, 90);
+     bounds.setLow(0, -9);
+     bounds.setHigh(0, 12);
+     bounds.setLow(1, -12);
+     bounds.setHigh(1, 9);
      //bounds.setLow(2, -boost::math::constants::pi<double>());
      //bounds.setHigh(2, boost::math::constants::pi<double>());
      SE2->setBounds(bounds);
@@ -121,7 +121,7 @@
      // Both start and goal are states with high velocity with the car in third gear.
      // However, to make the turn, the car cannot stay in third gear and will have to
      // shift to first gear.
-     start[0] = start[1] = -90.; // position
+     start[0] = start[1] = -9.; // position
      start[2] = boost::math::constants::pi<double>()/2; // orientation
      start[3] = 40.; // joint angle
      start[4] = 0.; // joint angle
@@ -129,7 +129,7 @@
      start[6] = 0.; // joint angle
      start[7] = 0.; // joint angle
      start[8] = 0.; // joint angle
-     goal[0] = goal[1] = 90.; // position
+     goal[0] = goal[1] = 9.; // position
      goal[2] = 0.; // orientation
      goal[3] = 0.; // joint angle
      goal[4] = 50.; // joint angle
@@ -180,7 +180,7 @@
 
      // try to solve the problem
      std::vector<double> path_1d;
-     if (setup.solve(100))
+     if (setup.solve(50))
      {
          // print the (approximate) solution path: print states along the path
          // and controls required to get from one state to the next
@@ -199,32 +199,37 @@
              std::cout << se2->getX() << ' ' << se2->getY() << ' ' << se2->getYaw() << ' ' << angles->values[0] << ' ' << angles->values[1] << ' ' << angles->values[2] << ' ' << angles->values[3] << ' ' << angles->values[4] << ' ' << angles->values[5] << ' ';
              // store the joints to result
              path_1d.push_back(se2->getX());
-	     path_1d.push_back(se2->getY());
-	     path_1d.push_back(se2->getYaw());
+             path_1d.push_back(se2->getY());
+             path_1d.push_back(se2->getYaw());
              path_1d.push_back(angles->values[0]);
-	     path_1d.push_back(angles->values[1]);
- 	     path_1d.push_back(angles->values[2]);
-	     path_1d.push_back(angles->values[3]);
-	     path_1d.push_back(angles->values[4]);
-	     path_1d.push_back(angles->values[5]);
+             path_1d.push_back(angles->values[1]);
+             path_1d.push_back(angles->values[2]);
+             path_1d.push_back(angles->values[3]);
+             path_1d.push_back(angles->values[4]);
+             path_1d.push_back(angles->values[5]);
 
-             if (i==0)
+             if (i==0){
                  // null controls applied for zero seconds to get to start state
                  std::cout << "0 0 0 0 0 0 0 0 0";
+             }
              else
              {
                  // print controls and control duration needed to get from state i-1 to state i
-                 const double* u =
-                     path.getControl(i-1)->as<oc::RealVectorControlSpace::ControlType>()->values;
+                 const double* u = path.getControl(i-1)->as<oc::RealVectorControlSpace::ControlType>()->values;
                  std::cout << u[0] << ' ' << u[1] << ' ' << u[2] << ' ' << u[3] << ' ' << u[4] << ' ' << u[5] << ' ' << u[6] << ' ' << u[7] << ' ' << path.getControlDuration(i-1);
              }
              std::cout << std::endl;
          }
+
          if (!setup.haveExactSolutionPath())
          {
              std::cout << "Solution is approximate. Distance to actual goal is " <<
                  setup.getProblemDefinition()->getSolutionDifference() << std::endl;
          }
+         else{
+             std::cout << "Solution is exact!"<<setup.getProblemDefinition()->getSolutionDifference() << std::endl;
+         }
+
      }
      
      // the following is responsible in sending a service request to the visualization server
